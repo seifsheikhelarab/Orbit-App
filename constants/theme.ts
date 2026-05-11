@@ -1,53 +1,229 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+import { Platform } from 'react-native'
 
 export const Colors = {
   light: {
     text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
+    background: '#fafbfc',
+    tint: '#1a1a2e',
     icon: '#687076',
     tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    tabIconSelected: '#1a1a2e',
+
+    primary: '#1a1a2e',
+    primaryHover: '#16213e',
+    primaryContainer: '#e8e8ed',
+    onPrimary: '#ffffff',
+    onPrimaryContainer: '#1a1a2e',
+
+    secondary: '#4a5568',
+    secondaryContainer: '#f7f8fa',
+    onSecondary: '#ffffff',
+    onSecondaryContainer: '#2d3748',
+
+    accent: '#0f766e',
+    accentContainer: '#ccfbf1',
+    onAccent: '#ffffff',
+    onAccentContainer: '#134e4a',
+
+    surface: '#ffffff',
+    surfaceDim: '#f8f9fa',
+    surfaceBright: '#ffffff',
+    surfaceContainerLowest: '#ffffff',
+    surfaceContainerLow: '#f8f9fa',
+    surfaceContainer: '#f1f3f5',
+    surfaceContainerHigh: '#e5e7eb',
+    surfaceContainerHighest: '#d1d5db',
+
+    onSurface: '#111827',
+    onSurfaceVariant: '#4b5563',
+
+    outline: '#d1d5db',
+    outlineVariant: '#e5e7eb',
+
+    error: '#dc2626',
+    errorContainer: '#fef2f2',
+    onError: '#ffffff',
+    onErrorContainer: '#991b1b',
+
+    warning: '#d97706',
+    warningContainer: '#fffbeb',
+    onWarning: '#ffffff',
+    onWarningContainer: '#78350f',
+
+    success: '#059669',
+    successContainer: '#ecfdf5',
+    onSuccess: '#ffffff',
+    onSuccessContainer: '#064e3b',
+
+    inversePrimary: '#a5b4fc',
+    inverseSurface: '#111827',
+    inverseOnSurface: '#f8f9fa',
+
+    primaryFixed: '#1a1a2e',
+    primaryFixedDim: '#e8e8ed',
+    onPrimaryFixed: '#ffffff',
+    onPrimaryFixedDim: '#1a1a2e',
+
+    accentFixed: '#0f766e',
+    accentFixedDim: '#ccfbf1',
+    onAccentFixed: '#ffffff',
+    onAccentFixedDim: '#134e4a',
+
+    muted: '#f3f4f6',
+    mutedForeground: '#6b7280',
+    popover: '#ffffff',
+    popoverForeground: '#111827',
+    ring: '#1a1a2e',
+    border: '#e5e7eb',
+    input: '#f8f9fa',
+
+    statusSaved: '#4f46e5',
+    statusApplied: '#4f46e5',
+    statusPhoneScreen: '#8b5cf6',
+    statusInterview: '#f59e0b',
+    statusOffer: '#10b981',
+    statusClosed: '#64748b',
+
+    statusBgSaved: '#e0e7ff',
+    statusBgApplied: '#dbeafe',
+    statusBgPhoneScreen: '#f3e8ff',
+    statusBgInterview: '#fef3c7',
+    statusBgOffer: '#dcfce7',
+    statusBgClosed: '#f1f5f9',
+
+    statusTextSaved: '#3730a3',
+    statusTextApplied: '#1e40af',
+    statusTextPhoneScreen: '#6b21a8',
+    statusTextInterview: '#92400e',
+    statusTextOffer: '#166534',
+    statusTextClosed: '#475569',
   },
   dark: {
     text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
+    background: '#111827',
+    tint: '#ffffff',
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
-};
+    tabIconSelected: '#ffffff',
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
+    primary: '#a5b4fc',
+    primaryHover: '#c7d2fe',
+    primaryContainer: '#1e1b4b',
+    onPrimary: '#1a1a2e',
+    onPrimaryContainer: '#e0e7ff',
+
+    secondary: '#cbd5e1',
+    secondaryContainer: '#1e293b',
+    onSecondary: '#0f172a',
+    onSecondaryContainer: '#e2e8f0',
+
+    accent: '#5eead4',
+    accentContainer: '#134e4a',
+    onAccent: '#0f766e',
+    onAccentContainer: '#ccfbf1',
+
+    surface: '#1a1a2e',
+    surfaceDim: '#0f172a',
+    surfaceBright: '#1e293b',
+    surfaceContainerLowest: '#0f172a',
+    surfaceContainerLow: '#1e293b',
+    surfaceContainer: '#334155',
+    surfaceContainerHigh: '#475569',
+    surfaceContainerHighest: '#64748b',
+
+    onSurface: '#f1f5f9',
+    onSurfaceVariant: '#94a3b8',
+
+    outline: '#475569',
+    outlineVariant: '#334155',
+
+    error: '#fca5a5',
+    errorContainer: '#450a0a',
+    onError: '#450a0a',
+    onErrorContainer: '#fca5a5',
+
+    warning: '#fbbf24',
+    warningContainer: '#78350f',
+    onWarning: '#78350f',
+    onWarningContainer: '#fbbf24',
+
+    success: '#6ee7b7',
+    successContainer: '#064e3b',
+    onSuccess: '#064e3b',
+    onSuccessContainer: '#6ee7b7',
+
+    inverseSurface: '#fafbfc',
+    inverseOnSurface: '#1a1a2e',
+
+    primaryFixed: '#1a1a2e',
+    primaryFixedDim: '#e8e8ed',
+    onPrimaryFixed: '#ffffff',
+    onPrimaryFixedDim: '#1a1a2e',
+
+    accentFixed: '#0f766e',
+    accentFixedDim: '#ccfbf1',
+    onAccentFixed: '#ffffff',
+    onAccentFixedDim: '#134e4a',
+
+    muted: '#374151',
+    mutedForeground: '#9ca3af',
+    popover: '#1f2937',
+    popoverForeground: '#f3f4f6',
+    ring: '#a5b4fc',
+    border: '#374151',
+    input: '#1e293b',
+
+    statusSaved: '#818cf8',
+    statusApplied: '#818cf8',
+    statusPhoneScreen: '#a78bfa',
+    statusInterview: '#fbbf24',
+    statusOffer: '#34d399',
+    statusClosed: '#94a3b8',
+
+    statusBgSaved: '#312e81',
+    statusBgApplied: '#1e3a8a',
+    statusBgPhoneScreen: '#4c1d95',
+    statusBgInterview: '#78350f',
+    statusBgOffer: '#065f46',
+    statusBgClosed: '#1e293b',
+
+    statusTextSaved: '#c7d2fe',
+    statusTextApplied: '#bfdbfe',
+    statusTextPhoneScreen: '#ddd6fe',
+    statusTextInterview: '#fde68a',
+    statusTextOffer: '#a7f3d0',
+    statusTextClosed: '#e2e8f0',
   },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+}
+
+export const Fonts = {
+  headline: 'Manrope',
+  body: 'Inter',
+  sans: Platform.select({
+    ios: 'system-ui',
+    web: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    default: 'normal',
+  }),
+  serif: Platform.select({
+    ios: 'ui-serif',
+    web: "Georgia, 'Times New Roman', serif",
+    default: 'serif',
+  }),
+  rounded: Platform.select({
+    ios: 'ui-rounded',
+    default: 'normal',
+  }),
+  mono: Platform.select({
+    ios: 'ui-monospace',
+    web: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    default: 'monospace',
+  }),
+}
+
+export const Typography = {
+  display: { lg: 56, md: 40, sm: 32 },
+  headline: { lg: 28, md: 24, sm: 20 },
+  title: { lg: 18, md: 16, sm: 14 },
+  body: { lg: 18, md: 16, sm: 14 },
+  label: { lg: 14, md: 12, sm: 11 },
+}
