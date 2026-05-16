@@ -1,31 +1,34 @@
 import { Link } from 'expo-router'
 import { View, Text, StyleSheet } from 'react-native'
 import { Colors, Typography, Fonts } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
 
 export default function ModalScreen() {
+  const colors = useColors()
+  const s = getStyles(colors)
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>This is a modal</Text>
-      <Link href="/" dismissTo style={styles.link}>
-        <Text style={styles.linkText}>Go to home screen</Text>
+    <View style={s.container}>
+      <Text style={s.title}>This is a modal</Text>
+      <Link href="/" dismissTo style={s.link}>
+        <Text style={s.linkText}>Go to home screen</Text>
       </Link>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: Colors.light.background,
+    backgroundColor: c.background,
   },
   title: {
     fontSize: Typography.title.lg,
     fontWeight: '700',
     fontFamily: Fonts.headline,
-    color: Colors.light.onSurface,
+    color: c.onSurface,
   },
   link: {
     marginTop: 15,
@@ -33,8 +36,10 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: Typography.body.sm,
-    color: Colors.light.accent,
+    color: c.accent,
     fontFamily: Fonts.body,
     fontWeight: '600',
   },
 })
+
+const styles = getStyles(Colors.light)

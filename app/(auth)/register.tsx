@@ -1,27 +1,32 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Animated, KeyboardAvoidingView, Platform } from 'react-native'
 import { Link, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { signUp, signIn } from '@/lib/auth-client'
 import { cacheSessionFromLogin } from '@/contexts/AuthContext'
-import { Colors, Typography, Fonts, Shadows } from '@/constants/theme'
+import { Colors, Typography, Fonts, getShadows } from '@/constants/theme'
 import { useColors } from '@/hooks/useColors'
+import { useReduceMotion } from '@/hooks/useReduceMotion'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import {
+  createStaggerValues,
+  animateStagger,
+  staggerStyle,
+} from '@/constants/animations'
 
-// NOTE: uses Colors.light - needs dark mode support via useColors refactor
-function getPasswordStrength(pw: string) {
+function getPasswordStrength(pw: string, c: typeof Colors.light) {
   let score = 0
   if (pw.length >= 8) score++
   if (pw.length >= 12) score++
   if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++
   if (/\d/.test(pw)) score++
   if (/[^a-zA-Z0-9]/.test(pw)) score++
-  if (pw.length === 0) return { level: 0, label: '', color: Colors.light.onSurfaceVariant, barColor: 'transparent', width: '0%' }
-  if (score <= 1) return { level: 1, label: 'WEAK', color: Colors.light.error, barColor: Colors.light.error, width: '25%' }
-  if (score === 2) return { level: 2, label: 'FAIR', color: Colors.light.warning, barColor: Colors.light.warning, width: '50%' }
-  if (score === 3) return { level: 3, label: 'GOOD', color: Colors.light.primary, barColor: Colors.light.primary, width: '75%' }
-  return { level: 4, label: 'STRONG', color: Colors.light.success, barColor: Colors.light.success, width: '100%' }
+  if (pw.length === 0) return { level: 0, label: '', color: c.onSurfaceVariant, barColor: 'transparent', width: '0%' }
+  if (score <= 1) return { level: 1, label: 'WEAK', color: c.error, barColor: c.error, width: '25%' }
+  if (score === 2) return { level: 2, label: 'FAIR', color: c.warning, barColor: c.warning, width: '50%' }
+  if (score === 3) return { level: 3, label: 'GOOD', color: c.primary, barColor: c.primary, width: '75%' }
+  return { level: 4, label: 'STRONG', color: c.success, barColor: c.success, width: '100%' }
 }
 
 const DECORATIVE_DOTS = [
@@ -42,20 +47,19 @@ export default function RegisterScreen() {
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
-  const entrance = useRef([...Array(5)].map(() => new Animated.Value(0))).current
+  const reduceMotion = useReduceMotion()
+  const staggerVals = useRef(createStaggerValues(5, 0, 12)).current
 
   useEffect(() => {
-    entrance.forEach((anim, i) => {
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 500,
-        delay: i * 100,
-        useNativeDriver: true,
-      }).start()
+    animateStagger(staggerVals.opacities, staggerVals.translates, {
+      baseDelay: 0,
+      staggerMs: 100,
+      startY: 12,
+      reduced: reduceMotion,
     })
-  }, [])
+  }, [reduceMotion])
 
-  const strength = useMemo(() => getPasswordStrength(password), [password])
+  const strength = useMemo(() => getPasswordStrength(password, colors), [password, colors])
 
   const handleRegister = async () => {
     setLoading(true)
@@ -83,10 +87,10 @@ export default function RegisterScreen() {
     return 'shield-checkmark'
   }
 
-  const staggerStyle = (index: number) => ({
-    opacity: entrance[index],
-    transform: [{ translateY: entrance[index].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
-  })
+  const getStaggerStyle = (index: number) =>
+    staggerStyle(staggerVals.opacities[index], staggerVals.translates[index], 12)
+
+  const styles = useMemo(() => getStyles(colors), [colors])
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -108,7 +112,7 @@ export default function RegisterScreen() {
         ))}
         <View style={styles.orbitalRing} />
 
-        <Animated.View style={[styles.card, staggerStyle(0)]}>
+        <Animated.View style={[styles.card, getStaggerStyle(0)]}>
           <View style={styles.accentBar} />
 
           <View style={styles.header}>
@@ -120,7 +124,7 @@ export default function RegisterScreen() {
             <Text style={styles.subtitle}>Establish your mission credentials.</Text>
           </View>
 
-          <Animated.View style={staggerStyle(1)}>
+          <Animated.View style={getStaggerStyle(1)}>
             <Button variant="outline" onPress={handleGoogle}>
               <Ionicons name="logo-google" size={18} color={colors.onSurfaceVariant} />
               <Text style={{ color: colors.onSurface }}>  Sign up with Google</Text>
@@ -134,20 +138,20 @@ export default function RegisterScreen() {
           </Animated.View>
 
           {errorMsg ? (
-            <Animated.View style={[styles.errorBanner, staggerStyle(2)]}>
+            <Animated.View style={[styles.errorBanner, getStaggerStyle(2)]}>
               <Ionicons name="alert-circle" size={16} color={colors.error} />
               <Text style={styles.errorText}>{errorMsg}</Text>
             </Animated.View>
           ) : null}
 
           {successMsg ? (
-            <Animated.View style={[styles.successBanner, staggerStyle(2)]}>
+            <Animated.View style={[styles.successBanner, getStaggerStyle(2)]}>
               <Ionicons name="shield-checkmark-outline" size={16} color={colors.success} />
               <Text style={styles.successText}>{successMsg}</Text>
             </Animated.View>
           ) : null}
 
-          <Animated.View style={[styles.form, staggerStyle(2)]}>
+          <Animated.View style={[styles.form, getStaggerStyle(2)]}>
             <View style={styles.field}>
               <Text style={styles.label}>FULL NAME</Text>
               <Input value={name} onChangeText={setName} placeholder="Alex Rivera" autoCapitalize="words" />
@@ -174,7 +178,7 @@ export default function RegisterScreen() {
                 <View style={styles.strengthContainer}>
                   <View style={styles.strengthBars}>
                     {[1, 2, 3, 4].map((i) => (
-                      <View key={i} style={[styles.strengthBar, { backgroundColor: i <= strength.level ? strength.barColor : Colors.light.outlineVariant }]} />
+                      <View key={i} style={[styles.strengthBar, { backgroundColor: i <= strength.level ? strength.barColor : colors.outlineVariant }]} />
                     ))}
                   </View>
                   <View style={styles.strengthLabel}>
@@ -186,11 +190,11 @@ export default function RegisterScreen() {
             </View>
           </Animated.View>
 
-          <Animated.View style={staggerStyle(3)}>
+          <Animated.View style={getStaggerStyle(3)}>
             <Button onPress={handleRegister} loading={loading} size="lg">Create Account</Button>
           </Animated.View>
 
-          <Animated.View style={[styles.footer, staggerStyle(4)]}>
+          <Animated.View style={[styles.footer, getStaggerStyle(4)]}>
             <Text style={styles.footerText}>Already registered? </Text>
             <Link href={'/(auth)/login' as any} style={styles.footerLink}>Sign in</Link>
           </Animated.View>
@@ -200,99 +204,102 @@ export default function RegisterScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
-  scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingVertical: 48 },
-  decorativeDot: { position: 'absolute', zIndex: 0 },
-  orbitalRing: {
-    position: 'absolute',
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    borderWidth: 1,
-    borderColor: Colors.light.accent + '10',
-    bottom: '10%',
-    left: -50,
-  },
-  card: {
-    backgroundColor: Colors.light.surface,
-    borderRadius: 20,
-    padding: 32,
-    ...Shadows.xl,
-    overflow: 'hidden',
-  },
-  accentBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: Colors.light.accent,
-  },
-  header: { alignItems: 'center', marginBottom: 28 },
-  logoWrap: {
-    width: 64, height: 64, borderRadius: 20,
-    backgroundColor: Colors.light.accentContainer,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16,
-  },
-  badgeText: {
-    fontSize: Typography.label.sm, fontFamily: Fonts.body,
-    fontWeight: '700', color: Colors.light.accent,
-    letterSpacing: 2, marginBottom: 8,
-  },
-  title: {
-    fontSize: Typography.headline.lg, fontFamily: Fonts.headline,
-    fontWeight: '800', color: Colors.light.onSurface,
-    letterSpacing: -0.5, marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: Typography.body.sm, fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant, letterSpacing: 0.3,
-  },
-  divider: {
-    flexDirection: 'row', alignItems: 'center', marginVertical: 20,
-  },
-  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.light.outlineVariant },
-  dividerText: {
-    fontSize: Typography.label.sm, fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant, marginHorizontal: 16,
-    letterSpacing: 0.8, textTransform: 'uppercase',
-  },
-  errorBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: Colors.light.errorContainer, borderRadius: 8,
-    padding: 12, marginBottom: 16,
-  },
-  errorText: {
-    fontSize: Typography.body.sm, fontFamily: Fonts.body,
-    color: Colors.light.error, fontWeight: '500', flex: 1,
-  },
-  successBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: Colors.light.successContainer, borderRadius: 8,
-    padding: 12, marginBottom: 16,
-  },
-  successText: {
-    fontSize: Typography.body.sm, fontFamily: Fonts.body,
-    color: Colors.light.success, fontWeight: '500', flex: 1,
-  },
-  form: { gap: 20 },
-  field: { gap: 6 },
-  label: {
-    fontSize: Typography.label.sm, fontFamily: Fonts.body,
-    fontWeight: '700', color: Colors.light.onSurface, letterSpacing: 0.8,
-  },
-  eyeButton: { padding: 12 },
-  strengthContainer: { marginTop: 8, gap: 6 },
-  strengthBars: { flexDirection: 'row', gap: 6 },
-  strengthBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: Colors.light.outlineVariant },
-  strengthLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  strengthText: {
-    fontSize: Typography.label.sm, fontFamily: Fonts.body,
-    fontWeight: '700', letterSpacing: 0.8,
-  },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
-  footerText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant },
-  footerLink: { fontSize: Typography.body.sm, fontFamily: Fonts.body, fontWeight: '700', color: Colors.light.accent },
-})
+function getStyles(c: typeof Colors.light) {
+  const s = getShadows(c)
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingVertical: 48 },
+    decorativeDot: { position: 'absolute', zIndex: 0 },
+    orbitalRing: {
+      position: 'absolute',
+      width: 240,
+      height: 240,
+      borderRadius: 120,
+      borderWidth: 1,
+      borderColor: c.accent + '10',
+      bottom: '10%',
+      left: -50,
+    },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 20,
+      padding: 32,
+      ...s.xl,
+      overflow: 'hidden',
+    },
+    accentBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 4,
+      backgroundColor: c.accent,
+    },
+    header: { alignItems: 'center', marginBottom: 28 },
+    logoWrap: {
+      width: 64, height: 64, borderRadius: 20,
+      backgroundColor: c.accentContainer,
+      alignItems: 'center', justifyContent: 'center',
+      marginBottom: 16,
+    },
+    badgeText: {
+      fontSize: Typography.label.sm, fontFamily: Fonts.body,
+      fontWeight: '700', color: c.accent,
+      letterSpacing: 2, marginBottom: 8,
+    },
+    title: {
+      fontSize: Typography.headline.lg, fontFamily: Fonts.headline,
+      fontWeight: '800', color: c.onSurface,
+      letterSpacing: -0.5, marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: Typography.body.sm, fontFamily: Fonts.body,
+      color: c.onSurfaceVariant, letterSpacing: 0.3,
+    },
+    divider: {
+      flexDirection: 'row', alignItems: 'center', marginVertical: 20,
+    },
+    dividerLine: { flex: 1, height: 1, backgroundColor: c.outlineVariant },
+    dividerText: {
+      fontSize: Typography.label.sm, fontFamily: Fonts.body,
+      color: c.onSurfaceVariant, marginHorizontal: 16,
+      letterSpacing: 0.8, textTransform: 'uppercase',
+    },
+    errorBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      backgroundColor: c.errorContainer, borderRadius: 8,
+      padding: 12, marginBottom: 16,
+    },
+    errorText: {
+      fontSize: Typography.body.sm, fontFamily: Fonts.body,
+      color: c.error, fontWeight: '500', flex: 1,
+    },
+    successBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      backgroundColor: c.successContainer, borderRadius: 8,
+      padding: 12, marginBottom: 16,
+    },
+    successText: {
+      fontSize: Typography.body.sm, fontFamily: Fonts.body,
+      color: c.success, fontWeight: '500', flex: 1,
+    },
+    form: { gap: 20 },
+    field: { gap: 6 },
+    label: {
+      fontSize: Typography.label.sm, fontFamily: Fonts.body,
+      fontWeight: '700', color: c.onSurface, letterSpacing: 0.8,
+    },
+    eyeButton: { padding: 12 },
+    strengthContainer: { marginTop: 8, gap: 6 },
+    strengthBars: { flexDirection: 'row', gap: 6 },
+    strengthBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: c.outlineVariant },
+    strengthLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    strengthText: {
+      fontSize: Typography.label.sm, fontFamily: Fonts.body,
+      fontWeight: '700', letterSpacing: 0.8,
+    },
+    footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
+    footerText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: c.onSurfaceVariant },
+    footerLink: { fontSize: Typography.body.sm, fontFamily: Fonts.body, fontWeight: '700', color: c.accent },
+  })
+}

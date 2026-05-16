@@ -7,6 +7,7 @@ import { hexa } from '@/lib/opacity'
 import { useColors } from '@/hooks/useColors'
 import { Card, CardContent } from '@/components/ui/card'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ApiError } from '@/components/shared/ApiError'
 import { useCurrentUser, useUpdateUser, useChangePassword, useDeleteAccount } from '@/features/settings/api/useSettings'
 import { router } from 'expo-router'
 import { useAuth } from '@/contexts/AuthContext'
@@ -14,22 +15,8 @@ import { useThemeMode } from '@/contexts/ThemeContext'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-
-const TIMEZONES = [
-  { value: 'UTC', label: 'UTC' },
-  { value: 'America/New_York', label: 'New York' },
-  { value: 'America/Chicago', label: 'Chicago' },
-  { value: 'America/Denver', label: 'Denver' },
-  { value: 'America/Los_Angeles', label: 'Los Angeles' },
-  { value: 'Europe/London', label: 'London' },
-  { value: 'Europe/Paris', label: 'Paris' },
-  { value: 'Europe/Berlin', label: 'Berlin' },
-  { value: 'Asia/Tokyo', label: 'Tokyo' },
-  { value: 'Australia/Sydney', label: 'Sydney' },
-]
 
 function SectionCardHeader({ icon, title, subtitle, danger }: {
   icon: keyof typeof Ionicons.glyphMap
@@ -38,15 +25,16 @@ function SectionCardHeader({ icon, title, subtitle, danger }: {
   danger?: boolean
 }) {
   const colors = useColors()
+  const s = getStyles(colors)
   return (
-    <View style={[sstyles.sectionHeader, danger && sstyles.sectionHeaderDanger]}>
-      <View style={[sstyles.sectionIconWrap, danger && sstyles.sectionIconWrapDanger]}>
+    <View style={[s.sectionHeader, danger && s.sectionHeaderDanger]}>
+      <View style={[s.sectionIconWrap, danger && s.sectionIconWrapDanger]}>
         <Ionicons name={icon} size={18} color={danger ? colors.onError : colors.onPrimary} />
       </View>
       <View>
-        <Text style={[sstyles.sectionTitle, danger && { color: colors.error }]}>{title}</Text>
+        <Text style={[s.sectionTitle, danger && { color: colors.error }]}>{title}</Text>
         {subtitle && (
-          <Text style={[sstyles.sectionSub, danger && { color: hexa(colors.error, 0.80) }]}>{subtitle}</Text>
+          <Text style={[s.sectionSub, danger && { color: hexa(colors.error, 0.80) }]}>{subtitle}</Text>
         )}
       </View>
     </View>
@@ -56,18 +44,16 @@ function SectionCardHeader({ icon, title, subtitle, danger }: {
 export default function SettingsScreen() {
   const colors = useColors()
   const insets = useSafeAreaInsets()
+  const s = getStyles(colors)
   const { signOut } = useAuth()
   const { mode, setMode, isDark } = useThemeMode()
-  const { data: user, isLoading, refetch, isRefetching } = useCurrentUser()
+  const { data: user, isLoading, isError, error, refetch, isRefetching } = useCurrentUser()
   const updateUser = useUpdateUser()
   const changePassword = useChangePassword()
   const deleteAccount = useDeleteAccount()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [timezone, setTimezone] = useState('UTC')
-  const [emailReminders, setEmailReminders] = useState(true)
-  const [inAppNotifications, setInAppNotifications] = useState(true)
 
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -82,20 +68,17 @@ export default function SettingsScreen() {
       const u = user
       setName(u.name || '')
       setEmail(u.email || '')
-      setTimezone(u.timezone || 'UTC')
-      setEmailReminders(u.emailRemindersEnabled ?? true)
-      setInAppNotifications(u.inAppNotificationsEnabled ?? true)
     }
   }, [user])
 
   const handleSaveProfile = useCallback(async () => {
     try {
-      await updateUser.mutateAsync({ name, email, timezone, emailRemindersEnabled: emailReminders, inAppNotificationsEnabled: inAppNotifications })
+      await updateUser.mutateAsync({ name, email })
       Alert.alert('Saved', 'Profile updated successfully')
     } catch {
       Alert.alert('Error', 'Failed to update profile')
     }
-  }, [name, email, timezone, emailReminders, inAppNotifications, updateUser])
+  }, [name, email, updateUser])
 
   const handleChangePassword = useCallback(async () => {
     if (newPassword !== confirmPassword) {
@@ -132,30 +115,32 @@ export default function SettingsScreen() {
   const userData = user
 
   return (
-    <View style={sstyles.container}>
+    <View style={[s.container, { paddingTop: insets.top }]}>
       <PageHeader
-        icon="settings"
-        iconVariant="primary"
+        icon="settings-outline"
+        iconVariant="accent"
         title="Settings"
         subtitle={user ? (user.name || user.email) : undefined}
       />
 
       <ScrollView
-        style={sstyles.scroll}
-        contentContainerStyle={sstyles.scrollContent}
+        style={s.scroll}
+        contentContainerStyle={s.scrollContent}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
         }
       >
         {isLoading ? (
-          <View style={sstyles.loadingWrap}>
+          <View style={s.loadingWrap}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
+        ) : isError ? (
+          <ApiError message={(error as any)?.userMessage || (error as any)?.message} onRetry={() => refetch()} fullScreen />
         ) : (
           <>
             <Card>
               <CardContent>
-                <View style={sstyles.sectionBodyContent}>
+                <View style={s.sectionBodyContent}>
                   <SectionCardHeader icon="person-outline" title="Profile" subtitle="Your personal info" />
                   <View>
                     <Label>Full Name</Label>
@@ -165,7 +150,7 @@ export default function SettingsScreen() {
                     <Label>Email</Label>
                     <Input value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" containerStyle={{ marginTop: 6 }} />
                   </View>
-                  <Button onPress={handleSaveProfile} loading={updateUser.isPending} style={sstyles.saveBtn}>
+                  <Button onPress={handleSaveProfile} loading={updateUser.isPending} style={s.saveBtn}>
                     Update Profile
                   </Button>
                 </View>
@@ -174,68 +159,43 @@ export default function SettingsScreen() {
 
             <Card>
               <CardContent>
-                <View style={sstyles.sectionBodyContent}>
-                  <SectionCardHeader icon="notifications-outline" title="Preferences" subtitle="Regional and notification settings" />
-                  <Label>Timezone</Label>
-                  <Select value={timezone} onValueChange={setTimezone} options={TIMEZONES} style={{ marginTop: 6 }} />
-
-                  <View style={sstyles.switchRow}>
-                    <View style={sstyles.switchLabel}>
-                      <Text style={sstyles.switchTitle}>Email Reminders</Text>
-                      <Text style={sstyles.switchDesc}>Get notified about upcoming interviews</Text>
-                    </View>
-                    <Switch value={emailReminders} onValueChange={setEmailReminders} />
-                  </View>
-
-                  <View style={sstyles.switchRow}>
-                    <View style={sstyles.switchLabel}>
-                      <Text style={sstyles.switchTitle}>In-App Notifications</Text>
-                      <Text style={sstyles.switchDesc}>Real-time alerts in Orbit</Text>
-                    </View>
-                    <Switch value={inAppNotifications} onValueChange={setInAppNotifications} />
-                  </View>
-
-                  <Separator style={{ marginVertical: 4 }} />
-
-                  <View style={sstyles.switchRow}>
-                    <View style={sstyles.switchLabel}>
-                      <Text style={sstyles.switchTitle}>Dark Mode</Text>
-                      <Text style={sstyles.switchDesc}>{mode === 'system' ? 'Follows system setting' : isDark ? 'Dark theme' : 'Light theme'}</Text>
+                <View style={s.sectionBodyContent}>
+                  <SectionCardHeader icon="moon-outline" title="Appearance" />
+                  <View style={s.switchRow}>
+                    <View style={s.switchLabel}>
+                      <Text style={s.switchTitle}>Dark Mode</Text>
+                      <Text style={s.switchDesc}>{mode === 'system' ? 'Follows system setting' : isDark ? 'Dark theme' : 'Light theme'}</Text>
                     </View>
                     <Switch
                       value={isDark}
                       onValueChange={(v) => setMode(v ? 'dark' : 'light')}
                     />
                   </View>
-
-                  <Button onPress={handleSaveProfile} loading={updateUser.isPending} style={sstyles.saveBtn}>
-                    Save Preferences
-                  </Button>
                 </View>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent>
-                <View style={sstyles.sectionBodyContent}>
+                <View style={s.sectionBodyContent}>
                   <SectionCardHeader icon="compass-outline" title="Shortcuts" subtitle="Quick navigation" />
-                  <Pressable style={sstyles.shortcutRow} onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button">
-                    <View style={[sstyles.shortcutIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
+                  <Pressable style={s.shortcutRow} onPress={() => router.push('/(tabs)/profile')} accessibilityRole="button">
+                    <View style={[s.shortcutIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
                       <Ionicons name="person-outline" size={18} color={colors.accent} />
                     </View>
-                    <View style={sstyles.shortcutLabel}>
-                      <Text style={sstyles.shortcutTitle}>Professional Dossier</Text>
-                      <Text style={sstyles.shortcutDesc}>Manage your central record of experience</Text>
+                    <View style={s.shortcutLabel}>
+                      <Text style={s.shortcutTitle}>Professional Dossier</Text>
+                      <Text style={s.shortcutDesc}>Manage your central record of experience</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={colors.onSurfaceVariant} />
                   </Pressable>
-                  <Pressable style={sstyles.shortcutRow} onPress={() => router.push('/(tabs)/notifications')} accessibilityRole="button">
-                    <View style={[sstyles.shortcutIcon, { backgroundColor: hexa(colors.primary, 0.08) }]}>
+                  <Pressable style={s.shortcutRow} onPress={() => router.push('/(tabs)/notifications')} accessibilityRole="button">
+                    <View style={[s.shortcutIcon, { backgroundColor: hexa(colors.primary, 0.08) }]}>
                       <Ionicons name="notifications-outline" size={18} color={colors.primary} />
                     </View>
-                    <View style={sstyles.shortcutLabel}>
-                      <Text style={sstyles.shortcutTitle}>Notifications</Text>
-                      <Text style={sstyles.shortcutDesc}>View recent alerts and updates</Text>
+                    <View style={s.shortcutLabel}>
+                      <Text style={s.shortcutTitle}>Notifications</Text>
+                      <Text style={s.shortcutDesc}>View recent alerts and updates</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={colors.onSurfaceVariant} />
                   </Pressable>
@@ -245,14 +205,14 @@ export default function SettingsScreen() {
 
             <Card>
               <CardContent>
-                <View style={sstyles.sectionBodyContent}>
+                <View style={s.sectionBodyContent}>
                   <SectionCardHeader icon="shield-outline" title="Security" subtitle="Password and access" />
                   {!showPasswordForm ? (
                     <Button variant="outline" onPress={() => setShowPasswordForm(true)}>
                       Change Password
                     </Button>
                   ) : (
-                    <View style={sstyles.passwordForm}>
+                    <View style={s.passwordForm}>
                       <View>
                         <Label>Current Password</Label>
                         <Input value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry containerStyle={{ marginTop: 6 }} />
@@ -265,7 +225,7 @@ export default function SettingsScreen() {
                         <Label>Confirm New Password</Label>
                         <Input value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry containerStyle={{ marginTop: 6 }} />
                       </View>
-                      <View style={sstyles.passwordActions}>
+                      <View style={s.passwordActions}>
                         <Button
                           onPress={handleChangePassword}
                           loading={changePassword.isPending}
@@ -284,22 +244,22 @@ export default function SettingsScreen() {
               </CardContent>
             </Card>
 
-            <Card style={sstyles.dangerCard}>
+            <Card style={s.dangerCard}>
               <CardContent>
-                <View style={sstyles.sectionBodyContent}>
+                <View style={s.sectionBodyContent}>
                   <SectionCardHeader icon="warning-outline" title="Danger Zone" subtitle="Permanent actions" danger />
                   {!showDeleteConfirm ? (
                     <Button variant="destructive" onPress={() => setShowDeleteConfirm(true)}>
                       Delete Account
                     </Button>
                   ) : (
-                    <View style={sstyles.deleteConfirm}>
-                      <Text style={sstyles.deleteWarning}>
+                    <View style={s.deleteConfirm}>
+                      <Text style={s.deleteWarning}>
                         This cannot be undone. All your data will be permanently deleted.
                       </Text>
                       <Label>Type your email to confirm</Label>
                       <Input value={deleteEmailConfirm} onChangeText={setDeleteEmailConfirm} placeholder={userData?.email} autoCapitalize="none" containerStyle={{ marginTop: 6 }} />
-                      <View style={sstyles.passwordActions}>
+                      <View style={s.passwordActions}>
                         <Button
                           variant="destructive"
                           onPress={handleDeleteAccount}
@@ -330,10 +290,10 @@ export default function SettingsScreen() {
             <Button
               variant="outline"
               onPress={handleSignOut}
-              style={sstyles.signOutBtn}
+              style={s.signOutBtn}
             >
               <Ionicons name="log-out-outline" size={16} color={colors.error} />
-              <Text style={sstyles.signOutText}>Sign Out</Text>
+              <Text style={s.signOutText}>Sign Out</Text>
             </Button>
           </>
         )}
@@ -342,17 +302,16 @@ export default function SettingsScreen() {
   )
 }
 
-const sstyles = StyleSheet.create({
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
+    backgroundColor: c.background,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
-    paddingTop: 8,
     gap: 16,
     paddingBottom: 100,
   },
@@ -371,37 +330,37 @@ const sstyles = StyleSheet.create({
     marginHorizontal: -20,
     marginTop: -20,
     marginBottom: 0,
-    backgroundColor: Colors.light.surfaceContainerLow,
+    backgroundColor: c.surfaceContainerLow,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.outlineVariant,
+    borderBottomColor: c.outlineVariant,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
   sectionHeaderDanger: {
-    backgroundColor: Colors.light.errorContainer,
-    borderBottomColor: hexa(Colors.light.error, 0.19),
+    backgroundColor: c.errorContainer,
+    borderBottomColor: hexa(c.error, 0.19),
   },
   sectionIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: c.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionIconWrapDanger: {
-    backgroundColor: Colors.light.error,
+    backgroundColor: c.error,
   },
   sectionTitle: {
     fontSize: Typography.title.sm,
     fontWeight: '700',
     fontFamily: Fonts.headline,
-    color: Colors.light.onSurface,
+    color: c.onSurface,
   },
   sectionSub: {
     fontSize: Typography.label.sm,
     fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
+    color: c.onSurfaceVariant,
     fontWeight: '500',
     marginTop: 1,
   },
@@ -410,10 +369,10 @@ const sstyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 14,
-    backgroundColor: Colors.light.surfaceContainerLow,
+    backgroundColor: c.surfaceContainerLow,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.outlineVariant,
+    borderColor: c.outlineVariant,
   },
   switchLabel: {
     flex: 1,
@@ -423,12 +382,12 @@ const sstyles = StyleSheet.create({
     fontSize: Typography.body.sm,
     fontWeight: '600',
     fontFamily: Fonts.body,
-    color: Colors.light.onSurface,
+    color: c.onSurface,
   },
   switchDesc: {
     fontSize: Typography.label.sm,
     fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
+    color: c.onSurfaceVariant,
     marginTop: 2,
   },
   saveBtn: {
@@ -447,14 +406,14 @@ const sstyles = StyleSheet.create({
   deleteWarning: {
     fontSize: Typography.body.sm,
     fontFamily: Fonts.body,
-    color: Colors.light.error,
+    color: c.error,
     fontWeight: '500',
   },
   dangerCard: {
-    borderColor: hexa(Colors.light.error, 0.25),
+    borderColor: hexa(c.error, 0.25),
   },
   signOutBtn: {
-    borderColor: hexa(Colors.light.error, 0.25),
+    borderColor: hexa(c.error, 0.25),
     flexDirection: 'row',
     gap: 8,
   },
@@ -462,17 +421,17 @@ const sstyles = StyleSheet.create({
     fontSize: Typography.body.sm,
     fontWeight: '600',
     fontFamily: Fonts.body,
-    color: Colors.light.error,
+    color: c.error,
   },
   shortcutRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    backgroundColor: Colors.light.surfaceContainerLow,
+    backgroundColor: c.surfaceContainerLow,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.light.outlineVariant,
+    borderColor: c.outlineVariant,
   },
   shortcutIcon: {
     width: 36,
@@ -488,12 +447,12 @@ const sstyles = StyleSheet.create({
     fontSize: Typography.body.sm,
     fontWeight: '600',
     fontFamily: Fonts.body,
-    color: Colors.light.onSurface,
+    color: c.onSurface,
   },
   shortcutDesc: {
     fontSize: Typography.label.sm,
     fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
+    color: c.onSurfaceVariant,
     marginTop: 1,
   },
 })

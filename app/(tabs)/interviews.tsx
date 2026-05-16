@@ -1,13 +1,15 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { format, parseISO } from 'date-fns'
-import { Colors, Typography, Fonts } from '@/constants/theme'
+import { Colors, Typography, Fonts, getShadows } from '@/constants/theme'
 import { useColors } from '@/hooks/useColors'
 import { Card } from '@/components/ui/card'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StaggeredList } from '@/components/shared/StaggeredList'
+import { ApiError } from '@/components/shared/ApiError'
 import { useUpcomingInterviews } from '@/features/applications/api/useApplicationDetails'
 import { FeatureTip } from '@/components/onboarding/FeatureTip'
 import { useFeatureTip } from '@/hooks/useOnboarding'
@@ -38,8 +40,9 @@ const ROUND_TYPE_LABELS: Record<string, string> = {
 
 export default function InterviewsScreen() {
   const colors = useColors()
+  const insets = useSafeAreaInsets()
   const router = useRouter()
-  const { data: interviews, isLoading, refetch, isRefetching } = useUpcomingInterviews()
+  const { data: interviews, isLoading, isError, error, refetch, isRefetching } = useUpcomingInterviews()
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const interviewTip = useFeatureTip('interviews')
 
@@ -63,11 +66,13 @@ export default function InterviewsScreen() {
     setExpandedId((prev) => (prev === id ? null : id))
   }, [])
 
+  const styles = useMemo(() => getStyles(colors), [colors])
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <PageHeader
         icon="calendar-outline"
-        iconVariant="surface"
+        iconVariant="accent"
         title="Interviews"
         subtitle={`${sorted.length} upcoming round${sorted.length !== 1 ? 's' : ''}`}
       />
@@ -90,6 +95,8 @@ export default function InterviewsScreen() {
           <View style={styles.loadingWrap}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
+        ) : isError ? (
+          <ApiError message={(error as any)?.userMessage || (error as any)?.message} onRetry={() => refetch()} fullScreen />
         ) : sorted.length === 0 ? (
           <View style={styles.emptyWrap}>
             <View style={styles.emptyIconWrap}>
@@ -136,6 +143,7 @@ function InterviewCard({
   const router = useRouter()
   const date = parseISO(interview.scheduledAt)
   const isExpanded = expandedId === interview.id
+  const styles = useMemo(() => getStyles(colors), [colors])
 
   return (
     <Pressable
@@ -200,80 +208,82 @@ function InterviewCard({
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
-  scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingTop: 8, gap: 12, paddingBottom: 100 },
-  loadingWrap: { padding: 48, alignItems: 'center' },
-  emptyWrap: { alignItems: 'center', justifyContent: 'center', padding: 48, gap: 12, minHeight: 300 },
-  emptyIconWrap: {
-    width: 88, height: 88, borderRadius: 20,
-    backgroundColor: Colors.light.surfaceContainerHigh,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  emptyTitle: {
-    fontSize: Typography.headline.sm, fontWeight: '700',
-    fontFamily: Fonts.headline, color: Colors.light.onSurface,
-    textAlign: 'center',
-  },
-  emptyDesc: {
-    fontSize: Typography.body.sm, fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant, textAlign: 'center', maxWidth: 300,
-  },
-  cardInner: {
-    flexDirection: 'row',
-  },
-  dateSection: {
-    width: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 2,
-  },
-  dateDay: {
-    fontSize: Typography.label.sm, fontWeight: '700',
-    fontFamily: Fonts.body, textTransform: 'uppercase',
-    letterSpacing: 1.2, color: Colors.light.onSurfaceVariant,
-  },
-  dateNum: {
-    fontSize: Typography.headline.md, fontWeight: '800',
-    fontFamily: Fonts.headline, color: Colors.light.onSurface,
-    lineHeight: 30,
-  },
-  dateMonth: {
-    fontSize: Typography.label.sm, fontWeight: '700',
-    fontFamily: Fonts.body, textTransform: 'uppercase',
-    letterSpacing: 1.2, color: Colors.light.accent,
-  },
-  cardBody: { flex: 1, padding: 14, gap: 10, marginLeft: 0 },
-  companySection: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  companyIcon: {
-    width: 38, height: 38, borderRadius: 10,
-    backgroundColor: Colors.light.accentContainer,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  companyName: {
-    fontSize: Typography.title.sm, fontWeight: '700',
-    fontFamily: Fonts.headline, color: Colors.light.onSurface,
-  },
-  jobTitle: {
-    fontSize: Typography.label.md, fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant, fontWeight: '500', marginTop: 1,
-  },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: {
-    fontSize: Typography.label.sm, fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant, fontWeight: '600',
-  },
-  expandedSection: {
-    gap: 8, paddingTop: 10,
-    borderTopWidth: 1, borderTopColor: Colors.light.outlineVariant,
-  },
-  expandedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  expandedText: {
-    fontSize: Typography.label.md, fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant, flex: 1,
-  },
-  expandedActions: { flexDirection: 'row', gap: 8, marginTop: 6 },
-})
+function getStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    scroll: { flex: 1 },
+    scrollContent: { padding: 16, gap: 16, paddingBottom: 100 },
+    loadingWrap: { padding: 48, alignItems: 'center' },
+    emptyWrap: { alignItems: 'center', justifyContent: 'center', padding: 48, gap: 12, minHeight: 300 },
+    emptyIconWrap: {
+      width: 88, height: 88, borderRadius: 20,
+      backgroundColor: c.surfaceContainerHigh,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    emptyTitle: {
+      fontSize: Typography.headline.sm, fontWeight: '700',
+      fontFamily: Fonts.headline, color: c.onSurface,
+      textAlign: 'center',
+    },
+    emptyDesc: {
+      fontSize: Typography.body.sm, fontFamily: Fonts.body,
+      color: c.onSurfaceVariant, textAlign: 'center', maxWidth: 300,
+    },
+    cardInner: {
+      flexDirection: 'row',
+    },
+    dateSection: {
+      width: 80,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      gap: 2,
+    },
+    dateDay: {
+      fontSize: Typography.label.sm, fontWeight: '700',
+      fontFamily: Fonts.body, textTransform: 'uppercase',
+      letterSpacing: 1.2, color: c.onSurfaceVariant,
+    },
+    dateNum: {
+      fontSize: Typography.headline.md, fontWeight: '800',
+      fontFamily: Fonts.headline, color: c.onSurface,
+      lineHeight: 30,
+    },
+    dateMonth: {
+      fontSize: Typography.label.sm, fontWeight: '700',
+      fontFamily: Fonts.body, textTransform: 'uppercase',
+      letterSpacing: 1.2, color: c.accent,
+    },
+    cardBody: { flex: 1, padding: 14, gap: 10, marginLeft: 0 },
+    companySection: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    companyIcon: {
+      width: 38, height: 38, borderRadius: 10,
+      backgroundColor: c.accentContainer,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    companyName: {
+      fontSize: Typography.title.sm, fontWeight: '700',
+      fontFamily: Fonts.headline, color: c.onSurface,
+    },
+    jobTitle: {
+      fontSize: Typography.label.md, fontFamily: Fonts.body,
+      color: c.onSurfaceVariant, fontWeight: '500', marginTop: 1,
+    },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    metaText: {
+      fontSize: Typography.label.sm, fontFamily: Fonts.body,
+      color: c.onSurfaceVariant, fontWeight: '600',
+    },
+    expandedSection: {
+      gap: 8, paddingTop: 10,
+      borderTopWidth: 1, borderTopColor: c.outlineVariant,
+    },
+    expandedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    expandedText: {
+      fontSize: Typography.label.md, fontFamily: Fonts.body,
+      color: c.onSurfaceVariant, flex: 1,
+    },
+    expandedActions: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  })
+}

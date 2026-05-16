@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert, RefreshControl, type TextInput } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors, Typography, Fonts, Shadows } from '@/constants/theme'
+import { Colors, Typography, Fonts, getShadows } from '@/constants/theme'
 import { hexa } from '@/lib/opacity'
 import { useColors } from '@/hooks/useColors'
 import { Card, CardContent } from '@/components/ui/card'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ApiError } from '@/components/shared/ApiError'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,15 +16,16 @@ import { Label } from '@/components/ui/label'
 import { useProfile, useUpdateProfile } from '@/features/profile/api/useProfile'
 import { defaultResumeData, type ResumeData } from '@/features/resumes/api/types'
 
-function DossierScore({ label, score }: { label: string; score: number }) {
+function DossierScore({ label, score, c }: { label: string; score: number; c: typeof Colors.light }) {
+  const s = getStyles(c)
   return (
-    <View style={styles.scoreRow}>
-      <View style={styles.scoreLabel}>
-        <Text style={styles.scoreLabelText}>{label}</Text>
-        <Text style={styles.scoreValue}>{score}%</Text>
+    <View style={s.scoreRow}>
+      <View style={s.scoreLabel}>
+        <Text style={s.scoreLabelText}>{label}</Text>
+        <Text style={s.scoreValue}>{score}%</Text>
       </View>
-      <View style={styles.scoreTrack}>
-        <View style={[styles.scoreBar, { width: `${score}%` }]} />
+      <View style={s.scoreTrack}>
+        <View style={[s.scoreBar, { width: `${score}%` }]} />
       </View>
     </View>
   )
@@ -30,7 +33,8 @@ function DossierScore({ label, score }: { label: string; score: number }) {
 
 export default function ProfileScreen() {
   const colors = useColors()
-  const { data: profile, isLoading, refetch, isRefetching } = useProfile()
+  const insets = useSafeAreaInsets()
+  const { data: profile, isLoading, isError, error, refetch, isRefetching } = useProfile()
   const updateProfile = useUpdateProfile()
   const [formData, setFormData] = useState<ResumeData>(defaultResumeData)
 
@@ -79,22 +83,31 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[getStyles(colors).container, { paddingTop: insets.top }]}>
         <PageHeader icon="person-outline" iconVariant="accent" title="Professional Dossier" subtitle="Your central record of experience" />
-        <View style={styles.skeletonWrap}>
-          <View style={styles.skeletonCard} />
-          <View style={styles.skeletonCard} />
-          <View style={styles.skeletonRow}>
-            <View style={styles.skeletonHalf} />
-            <View style={styles.skeletonHalf} />
+        <View style={getStyles(colors).skeletonWrap}>
+          <View style={getStyles(colors).skeletonCard} />
+          <View style={getStyles(colors).skeletonCard} />
+          <View style={getStyles(colors).skeletonRow}>
+            <View style={getStyles(colors).skeletonHalf} />
+            <View style={getStyles(colors).skeletonHalf} />
           </View>
         </View>
       </View>
     )
   }
 
+  if (isError) {
+    return (
+      <View style={[getStyles(colors).container, { paddingTop: insets.top }]}>
+        <PageHeader icon="person-outline" iconVariant="accent" title="Professional Dossier" subtitle="Your central record of experience" />
+        <ApiError message={(error as any)?.userMessage || (error as any)?.message} onRetry={() => refetch()} fullScreen />
+      </View>
+    )
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={[getStyles(colors).container, { paddingTop: insets.top }]}>
       <PageHeader
         icon="person-outline"
         iconVariant="accent"
@@ -108,44 +121,44 @@ export default function ProfileScreen() {
         }
       />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}
+      <ScrollView style={getStyles(colors).scroll} contentContainerStyle={getStyles(colors).scrollContent}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
       >
-        <View style={styles.layout}>
-          <View style={styles.main}>
+        <View style={getStyles(colors).layout}>
+          <View style={getStyles(colors).main}>
             {/* Identity */}
             <Card>
               <CardContent>
-                <View style={styles.sectionHead}>
-                  <View style={[styles.sectionIcon, { backgroundColor: hexa(colors.primary, 0.08) }]}>
+                <View style={getStyles(colors).sectionHead}>
+                  <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.primary, 0.08) }]}>
                     <Ionicons name="person-outline" size={18} color={colors.primary} />
                   </View>
-                  <Text style={styles.sectionTitle}>Identity & Summary</Text>
+                  <Text style={getStyles(colors).sectionTitle}>Identity & Summary</Text>
                 </View>
-                <View style={styles.fieldGrid}>
-                  <View style={styles.half}>
+                <View style={getStyles(colors).fieldGrid}>
+                  <View style={getStyles(colors).half}>
                     <Label>Full Name</Label>
-                    <Input value={formData.basics.name} onChangeText={(v) => set(['basics', 'name'], v)} containerStyle={styles.inlineMt6} />
+                    <Input value={formData.basics.name} onChangeText={(v) => set(['basics', 'name'], v)} containerStyle={getStyles(colors).inlineMt6} />
                   </View>
-                  <View style={styles.half}>
+                  <View style={getStyles(colors).half}>
                     <Label>Professional Label</Label>
-                    <Input value={formData.basics.label} onChangeText={(v) => set(['basics', 'label'], v)} placeholder="e.g. Senior Engineer" containerStyle={styles.inlineMt6} />
+                    <Input value={formData.basics.label} onChangeText={(v) => set(['basics', 'label'], v)} placeholder="e.g. Senior Engineer" containerStyle={getStyles(colors).inlineMt6} />
                   </View>
-                  <View style={styles.half}>
+                  <View style={getStyles(colors).half}>
                     <Label>Email</Label>
-                    <Input value={formData.basics.email} onChangeText={(v) => set(['basics', 'email'], v)} keyboardType="email-address" containerStyle={styles.inlineMt6} />
+                    <Input value={formData.basics.email} onChangeText={(v) => set(['basics', 'email'], v)} keyboardType="email-address" containerStyle={getStyles(colors).inlineMt6} />
                   </View>
-                  <View style={styles.half}>
+                  <View style={getStyles(colors).half}>
                     <Label>Phone</Label>
-                    <Input value={formData.basics.phone} onChangeText={(v) => set(['basics', 'phone'], v)} containerStyle={styles.inlineMt6} />
+                    <Input value={formData.basics.phone} onChangeText={(v) => set(['basics', 'phone'], v)} containerStyle={getStyles(colors).inlineMt6} />
                   </View>
-                  <View style={styles.full}>
+                  <View style={getStyles(colors).full}>
                     <Label>Location</Label>
-                    <Input value={formData.basics.location} onChangeText={(v) => set(['basics', 'location'], v)} containerStyle={styles.inlineMt6} />
+                    <Input value={formData.basics.location} onChangeText={(v) => set(['basics', 'location'], v)} containerStyle={getStyles(colors).inlineMt6} />
                   </View>
-                  <View style={styles.full}>
+                  <View style={getStyles(colors).full}>
                     <Label>Strategic Summary</Label>
-                    <Textarea value={formData.basics.summary} onChangeText={(v) => set(['basics', 'summary'], v)} placeholder="High-level overview of your professional value proposition." style={styles.inlineMt6} />
+                    <Textarea value={formData.basics.summary} onChangeText={(v) => set(['basics', 'summary'], v)} placeholder="High-level overview of your professional value proposition." style={getStyles(colors).inlineMt6} />
                   </View>
                 </View>
               </CardContent>
@@ -154,38 +167,38 @@ export default function ProfileScreen() {
             {/* Experience */}
             <Card>
               <CardContent>
-                <View style={styles.sectionHead}>
-                  <View style={[styles.sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
+                <View style={getStyles(colors).sectionHead}>
+                  <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
                     <Ionicons name="briefcase-outline" size={18} color={colors.accent} />
                   </View>
-                  <Text style={styles.sectionTitle}>Professional Trajectory</Text>
+                  <Text style={getStyles(colors).sectionTitle}>Professional Trajectory</Text>
                 </View>
                 {formData.work.map((exp, i) => (
-                  <View key={i} style={styles.entry}>
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryHalf}>
+                  <View key={i} style={getStyles(colors).entry}>
+                    <View style={getStyles(colors).entryRow}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Organization</Label>
-                        <Input value={exp.company} onChangeText={(v) => set(['work', i, 'company'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={exp.company} onChangeText={(v) => set(['work', i, 'company'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
-                      <View style={styles.entryHalf}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Role Title</Label>
-                        <Input value={exp.position} onChangeText={(v) => set(['work', i, 'position'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={exp.position} onChangeText={(v) => set(['work', i, 'position'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryHalf}>
+                    <View style={getStyles(colors).entryRow}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Start Date</Label>
-                        <Input value={exp.startDate} onChangeText={(v) => set(['work', i, 'startDate'], v)} placeholder="YYYY-MM" containerStyle={styles.inlineMt4} />
+                        <Input value={exp.startDate} onChangeText={(v) => set(['work', i, 'startDate'], v)} placeholder="YYYY-MM" containerStyle={getStyles(colors).inlineMt4} />
                       </View>
-                      <View style={styles.entryHalf}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>End Date</Label>
-                        <Input value={exp.endDate} onChangeText={(v) => set(['work', i, 'endDate'], v)} placeholder="YYYY-MM" containerStyle={styles.inlineMt4} />
+                        <Input value={exp.endDate} onChangeText={(v) => set(['work', i, 'endDate'], v)} placeholder="YYYY-MM" containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
                     <Label>Impact & Key Results</Label>
-                    <Textarea value={exp.highlights} onChangeText={(v) => set(['work', i, 'highlights'], v)} placeholder="List your primary achievements..." style={styles.inlineMt4} />
+                    <Textarea value={exp.highlights} onChangeText={(v) => set(['work', i, 'highlights'], v)} placeholder="List your primary achievements..." style={getStyles(colors).inlineMt4} />
                     <Pressable onPress={() => setFormData(prev => ({ ...prev, work: prev.work.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
-                      <Text style={styles.removeText}>Remove</Text>
+                      <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -199,36 +212,36 @@ export default function ProfileScreen() {
             {/* Education */}
             <Card>
               <CardContent>
-                <View style={styles.sectionHead}>
-                  <View style={[styles.sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
+                <View style={getStyles(colors).sectionHead}>
+                  <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
                     <Ionicons name="school-outline" size={18} color={colors.accent} />
                   </View>
-                  <Text style={styles.sectionTitle}>Academic Foundation</Text>
+                  <Text style={getStyles(colors).sectionTitle}>Academic Foundation</Text>
                 </View>
                 {formData.education.map((edu, i) => (
-                  <View key={i} style={styles.entry}>
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryHalf}>
+                  <View key={i} style={getStyles(colors).entry}>
+                    <View style={getStyles(colors).entryRow}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Institution</Label>
-                        <Input value={edu.institution} onChangeText={(v) => set(['education', i, 'institution'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={edu.institution} onChangeText={(v) => set(['education', i, 'institution'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
-                      <View style={styles.entryHalf}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Degree</Label>
-                        <Input value={edu.studyType} onChangeText={(v) => set(['education', i, 'studyType'], v)} placeholder="Bachelor's" containerStyle={styles.inlineMt4} />
+                        <Input value={edu.studyType} onChangeText={(v) => set(['education', i, 'studyType'], v)} placeholder="Bachelor's" containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryHalf}>
+                    <View style={getStyles(colors).entryRow}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Field of Study</Label>
-                        <Input value={edu.area} onChangeText={(v) => set(['education', i, 'area'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={edu.area} onChangeText={(v) => set(['education', i, 'area'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
-                      <View style={styles.entryHalf}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Completion Date</Label>
-                        <Input value={edu.endDate} onChangeText={(v) => set(['education', i, 'endDate'], v)} placeholder="YYYY" containerStyle={styles.inlineMt4} />
+                        <Input value={edu.endDate} onChangeText={(v) => set(['education', i, 'endDate'], v)} placeholder="YYYY" containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
                     <Pressable onPress={() => setFormData(prev => ({ ...prev, education: prev.education.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
-                      <Text style={styles.removeText}>Remove</Text>
+                      <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -242,28 +255,28 @@ export default function ProfileScreen() {
             {/* Projects */}
             <Card>
               <CardContent>
-                <View style={styles.sectionHead}>
-                  <View style={[styles.sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
+                <View style={getStyles(colors).sectionHead}>
+                  <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
                     <Ionicons name="layers-outline" size={18} color={colors.accent} />
                   </View>
-                  <Text style={styles.sectionTitle}>Key Initiatives & Projects</Text>
+                  <Text style={getStyles(colors).sectionTitle}>Key Initiatives & Projects</Text>
                 </View>
                 {formData.projects.map((proj, i) => (
-                  <View key={i} style={styles.entry}>
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryHalf}>
+                  <View key={i} style={getStyles(colors).entry}>
+                    <View style={getStyles(colors).entryRow}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Project Title</Label>
-                        <Input value={proj.name} onChangeText={(v) => set(['projects', i, 'name'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={proj.name} onChangeText={(v) => set(['projects', i, 'name'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
-                      <View style={styles.entryHalf}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>URL</Label>
-                        <Input value={proj.url} onChangeText={(v) => set(['projects', i, 'url'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={proj.url} onChangeText={(v) => set(['projects', i, 'url'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
                     <Label>Description</Label>
-                    <Textarea value={proj.highlights} onChangeText={(v) => set(['projects', i, 'highlights'], v)} placeholder="Explain the problem solved and your contribution..." style={styles.inlineMt4} />
+                    <Textarea value={proj.highlights} onChangeText={(v) => set(['projects', i, 'highlights'], v)} placeholder="Explain the problem solved and your contribution..." style={getStyles(colors).inlineMt4} />
                     <Pressable onPress={() => setFormData(prev => ({ ...prev, projects: prev.projects.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
-                      <Text style={styles.removeText}>Remove</Text>
+                      <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -277,16 +290,16 @@ export default function ProfileScreen() {
             {/* Skills */}
             <Card>
               <CardContent>
-                <View style={styles.sectionHead}>
-                  <View style={[styles.sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
+                <View style={getStyles(colors).sectionHead}>
+                  <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
                     <Ionicons name="bulb-outline" size={18} color={colors.accent} />
                   </View>
-                  <Text style={styles.sectionTitle}>Expertise & Skills</Text>
+                  <Text style={getStyles(colors).sectionTitle}>Expertise & Skills</Text>
                 </View>
-                <View style={styles.skillsWrap}>
+                <View style={getStyles(colors).skillsWrap}>
                   {formData.skills.map((skill, i) => (
-                    <View key={i} style={styles.skillChip}>
-                      <Text style={styles.skillChipText}>{skill.name}</Text>
+                    <View key={i} style={getStyles(colors).skillChip}>
+                      <Text style={getStyles(colors).skillChipText}>{skill.name}</Text>
                       <Pressable onPress={() => setFormData(prev => ({ ...prev, skills: prev.skills.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
                         <Ionicons name="close" size={14} color={colors.onSurfaceVariant} />
                       </Pressable>
@@ -294,9 +307,9 @@ export default function ProfileScreen() {
                   ))}
                 </View>
                 {formData.skills.length === 0 && (
-                  <Text style={styles.emptySkills}>No expertise records found.</Text>
+                  <Text style={getStyles(colors).emptySkills}>No expertise records found.</Text>
                 )}
-                <View style={styles.addSkillRow}>
+                <View style={getStyles(colors).addSkillRow}>
                   <Input
                     ref={skillInputRef}
                     value={skillText}
@@ -305,7 +318,7 @@ export default function ProfileScreen() {
                     containerStyle={{ flex: 1 }}
                     onSubmitEditing={addSkill}
                   />
-                  <Pressable style={styles.addSkillBtn} onPress={addSkill} accessibilityRole="button">
+                  <Pressable style={getStyles(colors).addSkillBtn} onPress={addSkill} accessibilityRole="button">
                     <Ionicons name="add" size={20} color={colors.onPrimary} />
                   </Pressable>
                 </View>
@@ -315,26 +328,26 @@ export default function ProfileScreen() {
             {/* Volunteering */}
             <Card>
               <CardContent>
-                <View style={styles.sectionHead}>
-                  <View style={[styles.sectionIcon, { backgroundColor: hexa(colors.error, 0.08) }]}>
+                <View style={getStyles(colors).sectionHead}>
+                  <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.error, 0.08) }]}>
                     <Ionicons name="heart-outline" size={18} color={colors.error} />
                   </View>
-                  <Text style={styles.sectionTitle}>Volunteering</Text>
+                  <Text style={getStyles(colors).sectionTitle}>Volunteering</Text>
                 </View>
                 {formData.volunteer.map((vol, i) => (
-                  <View key={i} style={styles.entry}>
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryHalf}>
+                  <View key={i} style={getStyles(colors).entry}>
+                    <View style={getStyles(colors).entryRow}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Organization</Label>
-                        <Input value={vol.organization} onChangeText={(v) => set(['volunteer', i, 'organization'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={vol.organization} onChangeText={(v) => set(['volunteer', i, 'organization'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
-                      <View style={styles.entryHalf}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Role</Label>
-                        <Input value={vol.position} onChangeText={(v) => set(['volunteer', i, 'position'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={vol.position} onChangeText={(v) => set(['volunteer', i, 'position'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
                     <Pressable onPress={() => setFormData(prev => ({ ...prev, volunteer: prev.volunteer.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
-                      <Text style={styles.removeText}>Remove</Text>
+                      <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -348,26 +361,26 @@ export default function ProfileScreen() {
             {/* Languages */}
             <Card>
               <CardContent>
-                <View style={styles.sectionHead}>
-                  <View style={[styles.sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
+                <View style={getStyles(colors).sectionHead}>
+                  <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
                     <Ionicons name="globe-outline" size={18} color={colors.accent} />
                   </View>
-                  <Text style={styles.sectionTitle}>Languages</Text>
+                  <Text style={getStyles(colors).sectionTitle}>Languages</Text>
                 </View>
                 {formData.languages.map((lang, i) => (
-                  <View key={i} style={styles.entry}>
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryHalf}>
+                  <View key={i} style={getStyles(colors).entry}>
+                    <View style={getStyles(colors).entryRow}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Language</Label>
-                        <Input value={lang.name} onChangeText={(v) => set(['languages', i, 'name'], v)} containerStyle={styles.inlineMt4} />
+                        <Input value={lang.name} onChangeText={(v) => set(['languages', i, 'name'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
-                      <View style={styles.entryHalf}>
+                      <View style={getStyles(colors).entryHalf}>
                         <Label>Fluency</Label>
-                        <Input value={lang.fluency} onChangeText={(v) => set(['languages', i, 'fluency'], v)} placeholder="Native / Fluent" containerStyle={styles.inlineMt4} />
+                        <Input value={lang.fluency} onChangeText={(v) => set(['languages', i, 'fluency'], v)} placeholder="Native / Fluent" containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
                     <Pressable onPress={() => setFormData(prev => ({ ...prev, languages: prev.languages.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
-                      <Text style={styles.removeText}>Remove</Text>
+                      <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -380,33 +393,33 @@ export default function ProfileScreen() {
           </View>
 
           {/* Sidebar */}
-          <View style={styles.sidebar}>
-            <View style={styles.readinessCard}>
-              <View style={styles.readinessHeader}>
+          <View style={getStyles(colors).sidebar}>
+            <View style={getStyles(colors).readinessCard}>
+              <View style={getStyles(colors).readinessHeader}>
                 <Ionicons name="sparkles-outline" size={20} color={colors.accent} />
-                <Text style={styles.readinessTitle}>Intelligence Readiness</Text>
+                <Text style={getStyles(colors).readinessTitle}>Intelligence Readiness</Text>
               </View>
-              <Text style={styles.readinessDesc}>
+              <Text style={getStyles(colors).readinessDesc}>
                 Our models use this dossier as the ground truth. The higher the completeness, the better the tailoring accuracy.
               </Text>
-              <DossierScore label="Identity Record" score={identityScore} />
-              <DossierScore label="Experience Volume" score={expScore} />
-              <DossierScore label="Skill Density" score={skillScore} />
-              <View style={styles.readinessStatus}>
-                <View style={styles.statusDot} />
-                <Text style={styles.statusText}>Connected</Text>
+              <DossierScore label="Identity Record" score={identityScore} c={colors} />
+              <DossierScore label="Experience Volume" score={expScore} c={colors} />
+              <DossierScore label="Skill Density" score={skillScore} c={colors} />
+              <View style={getStyles(colors).readinessStatus}>
+                <View style={getStyles(colors).statusDot} />
+                <Text style={getStyles(colors).statusText}>Connected</Text>
               </View>
             </View>
 
-            <Pressable style={styles.autocvCard} onPress={() => router.push('/(tabs)/autocv' as const)} accessibilityRole="button">
-              <View style={styles.autocvTop}>
-                <View style={[styles.sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
+            <Pressable style={getStyles(colors).autocvCard} onPress={() => router.push('/(tabs)/autocv' as const)} accessibilityRole="button">
+              <View style={getStyles(colors).autocvTop}>
+                <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
                   <Ionicons name="sparkles-outline" size={18} color={colors.accent} />
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.onSurfaceVariant} />
               </View>
-              <Text style={styles.autocvTitle}>AutoCV Engine</Text>
-              <Text style={styles.autocvSub}>Generate tailored dossiers</Text>
+              <Text style={getStyles(colors).autocvTitle}>AutoCV Engine</Text>
+              <Text style={getStyles(colors).autocvSub}>Generate tailored dossiers</Text>
             </Pressable>
           </View>
         </View>
@@ -415,63 +428,64 @@ export default function ProfileScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
+
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingTop: 8, gap: 16, paddingBottom: 100 },
+  scrollContent: { padding: 16, gap: 16, paddingBottom: 100 },
   skeletonWrap: { padding: 16, gap: 16 },
-  skeletonCard: { height: 200, borderRadius: 32, backgroundColor: Colors.light.surfaceContainer },
+  skeletonCard: { height: 200, borderRadius: 32, backgroundColor: c.surfaceContainer },
   skeletonRow: { flexDirection: 'row', gap: 16 },
-  skeletonHalf: { flex: 1, height: 200, borderRadius: 32, backgroundColor: Colors.light.surfaceContainer },
+  skeletonHalf: { flex: 1, height: 200, borderRadius: 32, backgroundColor: c.surfaceContainer },
   layout: { gap: 16 },
   main: { gap: 16 },
   sidebar: { gap: 16 },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
   sectionIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  sectionTitle: { fontSize: Typography.title.sm, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline },
+  sectionTitle: { fontSize: Typography.title.sm, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline },
   fieldGrid: { gap: 16 },
   half: { flex: 1 },
   full: { flex: 1 },
-  entry: { gap: 10, padding: 16, backgroundColor: Colors.light.surfaceContainerLow, borderRadius: 16, marginBottom: 12 },
+  entry: { gap: 10, padding: 16, backgroundColor: c.surfaceContainerLow, borderRadius: 16, marginBottom: 12 },
   entryRow: { flexDirection: 'row', gap: 10 },
   entryHalf: { flex: 1 },
   inlineMt4: { marginTop: 4 },
   inlineMt6: { marginTop: 6 },
-  removeText: { fontSize: Typography.label.sm, color: Colors.light.error, fontWeight: '600', marginTop: 4, fontFamily: Fonts.body },
+  removeText: { fontSize: Typography.label.sm, color: c.error, fontWeight: '600', marginTop: 4, fontFamily: Fonts.body },
   skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   skillChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 12, paddingVertical: 6,
-    backgroundColor: Colors.light.surfaceContainer, borderRadius: 100,
-    borderWidth: 1, borderColor: Colors.light.outlineVariant,
+    backgroundColor: c.surfaceContainer, borderRadius: 100,
+    borderWidth: 1, borderColor: c.outlineVariant,
   },
-  skillChipText: { fontSize: Typography.label.md, fontWeight: '600', color: Colors.light.onSurface, fontFamily: Fonts.body },
-  emptySkills: { fontSize: Typography.body.sm, color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body, fontStyle: 'italic', marginBottom: 12 },
+  skillChipText: { fontSize: Typography.label.md, fontWeight: '600', color: c.onSurface, fontFamily: Fonts.body },
+  emptySkills: { fontSize: Typography.body.sm, color: c.onSurfaceVariant, fontFamily: Fonts.body, fontStyle: 'italic', marginBottom: 12 },
   addSkillRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  addSkillBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: Colors.light.primary, alignItems: 'center', justifyContent: 'center' },
+  addSkillBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
   readinessCard: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: c.primary,
     borderRadius: 28, padding: 24,
     gap: 16,
   },
   readinessHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  readinessTitle: { fontSize: Typography.body.md, fontWeight: '700', color: Colors.light.onPrimary, fontFamily: Fonts.headline },
-  readinessDesc: { fontSize: Typography.label.sm, color: hexa(Colors.light.onPrimary, 0.70), fontFamily: Fonts.body, lineHeight: 16 },
+  readinessTitle: { fontSize: Typography.body.md, fontWeight: '700', color: c.onPrimary, fontFamily: Fonts.headline },
+  readinessDesc: { fontSize: Typography.label.sm, color: hexa(c.onPrimary, 0.70), fontFamily: Fonts.body, lineHeight: 16 },
   scoreRow: { gap: 6 },
   scoreLabel: { flexDirection: 'row', justifyContent: 'space-between' },
-  scoreLabelText: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(Colors.light.onPrimary, 0.60), fontFamily: Fonts.body },
-  scoreValue: { fontSize: 9, fontWeight: '700', color: Colors.light.accent, fontFamily: Fonts.body },
-  scoreTrack: { height: 4, backgroundColor: hexa(Colors.light.onPrimary, 0.10), borderRadius: 2, overflow: 'hidden' },
-  scoreBar: { height: '100%', backgroundColor: Colors.light.accent, borderRadius: 2 },
-  readinessStatus: { flexDirection: 'row', alignItems: 'center', gap: 6, borderTopWidth: 1, borderTopColor: hexa(Colors.light.onPrimary, 0.10), paddingTop: 12 },
-  statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.light.accent },
-  statusText: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(Colors.light.onPrimary, 0.40), fontFamily: Fonts.body },
+  scoreLabelText: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(c.onPrimary, 0.60), fontFamily: Fonts.body },
+  scoreValue: { fontSize: 9, fontWeight: '700', color: c.accent, fontFamily: Fonts.body },
+  scoreTrack: { height: 4, backgroundColor: hexa(c.onPrimary, 0.10), borderRadius: 2, overflow: 'hidden' },
+  scoreBar: { height: '100%', backgroundColor: c.accent, borderRadius: 2 },
+  readinessStatus: { flexDirection: 'row', alignItems: 'center', gap: 6, borderTopWidth: 1, borderTopColor: hexa(c.onPrimary, 0.10), paddingTop: 12 },
+  statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.accent },
+  statusText: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(c.onPrimary, 0.40), fontFamily: Fonts.body },
   autocvCard: {
-    backgroundColor: Colors.light.surfaceContainerLow,
+    backgroundColor: c.surfaceContainerLow,
     borderRadius: 24, padding: 20,
-    borderWidth: 1, borderColor: Colors.light.outlineVariant,
+    borderWidth: 1, borderColor: c.outlineVariant,
   },
   autocvTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  autocvTitle: { fontSize: Typography.body.md, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline },
-  autocvSub: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(Colors.light.onSurfaceVariant, 0.50), marginTop: 2, fontFamily: Fonts.body },
+  autocvTitle: { fontSize: Typography.body.md, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline },
+  autocvSub: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(c.onSurfaceVariant, 0.50), marginTop: 2, fontFamily: Fonts.body },
 })

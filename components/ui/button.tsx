@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { Pressable, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native'
+import { Pressable, Text, ActivityIndicator, StyleSheet, type ViewStyle, type TextStyle } from 'react-native'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { useColors } from '@/hooks/useColors'
 import { Colors, Typography, Fonts } from '@/constants/theme'
@@ -155,9 +155,16 @@ const Button = forwardRef<any, ButtonProps>(
         ]}
       >
         {loading ? (
-          <Text style={[{ fontSize: Typography.body.sm, fontFamily: Fonts.body }, variantText]}>...</Text>
+          <>
+            <ActivityIndicator size="small" color={variantText.color || colors.onPrimary} />
+            {typeof children === 'string' ? (
+              <Text style={[sizeTextStyles[size!], variantText, textStyle]}>{children}</Text>
+            ) : (
+              children
+            )}
+          </>
         ) : typeof children === 'string' ? (
-          <Text style={[sizeTextStyles[size!], variantText, textStyle]}>{children}</Text>
+          <Text style={[sizeTextStyles[size!], variantText, textStyle]} numberOfLines={1}>{children}</Text>
         ) : (
           children
         )}

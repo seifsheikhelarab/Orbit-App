@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as WebBrowser from 'expo-web-browser'
 import { Colors, Typography, Fonts } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -28,6 +29,8 @@ interface InterviewRoundsListProps {
 }
 
 function InterviewRoundsList({ rounds, isLoading, onAdd, onDelete }: InterviewRoundsListProps) {
+  const colors = useColors()
+  const s = getStyles(colors)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [roundType, setRoundType] = useState('PHONE_SCREEN')
   const [scheduledAt, setScheduledAt] = useState('')
@@ -64,11 +67,11 @@ function InterviewRoundsList({ rounds, isLoading, onAdd, onDelete }: InterviewRo
   if (isLoading) return <Spinner />
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="calendar-outline" size={16} color={Colors.light.accent} />
-        <Text style={styles.title}>Interviews</Text>
-        <View style={styles.spacer} />
+    <View style={s.container}>
+      <View style={s.header}>
+        <Ionicons name="calendar-outline" size={16} color={colors.accent} />
+        <Text style={s.title}>Interviews</Text>
+        <View style={s.spacer} />
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger>
             <Button variant="outline" size="sm">Log Interview</Button>
@@ -78,25 +81,25 @@ function InterviewRoundsList({ rounds, isLoading, onAdd, onDelete }: InterviewRo
               <DialogTitle>Log Interview Round</DialogTitle>
               <DialogDescription>Record details about an interview round</DialogDescription>
             </DialogHeader>
-            <View style={styles.formFields}>
+            <View style={s.formFields}>
               <View>
-                <Text style={styles.label}>Round Type *</Text>
+                <Text style={s.label}>Round Type *</Text>
                 <Select value={roundType} onValueChange={setRoundType} options={ROUND_TYPES.map(r => ({ label: r.label, value: r.value }))} />
               </View>
               <View>
-                <Text style={styles.label}>Date</Text>
-                <Input containerStyle={styles.input} value={scheduledAt} onChangeText={setScheduledAt} placeholder="2025-03-15T10:00" />
+                <Text style={s.label}>Date</Text>
+                <Input containerStyle={s.input} value={scheduledAt} onChangeText={setScheduledAt} placeholder="2025-03-15T10:00" />
               </View>
               <View>
-                <Text style={styles.label}>Interviewer</Text>
-                <Input containerStyle={styles.input} value={interviewerName} onChangeText={setInterviewerName} placeholder="John Doe" />
+                <Text style={s.label}>Interviewer</Text>
+                <Input containerStyle={s.input} value={interviewerName} onChangeText={setInterviewerName} placeholder="John Doe" />
               </View>
               <View>
-                <Text style={styles.label}>Notes</Text>
-                <Input containerStyle={styles.input} value={notes} onChangeText={setNotes} placeholder="Notes about the interview..." multiline />
+                <Text style={s.label}>Notes</Text>
+                <Input containerStyle={s.input} value={notes} onChangeText={setNotes} placeholder="Notes about the interview..." multiline textAlignVertical="top" />
               </View>
               <View>
-                <Text style={styles.label}>Outcome</Text>
+                <Text style={s.label}>Outcome</Text>
                 <Select value={outcome} onValueChange={setOutcome} options={[{ label: 'Pending', value: '' }, ...OUTCOMES.map(o => ({ label: o.label, value: o.value }))]} />
               </View>
             </View>
@@ -109,42 +112,43 @@ function InterviewRoundsList({ rounds, isLoading, onAdd, onDelete }: InterviewRo
       </View>
 
       {rounds.length > 0 ? (
-        <View style={styles.list}>
+        <View style={s.list}>
           {rounds.map((round) => (
             <RoundItem key={round.id} round={round} onAddToCalendar={handleAddToCalendar} onDelete={onDelete} />
           ))}
         </View>
       ) : (
-        <View style={styles.empty}>
-          <Ionicons name="calendar-outline" size={32} color={Colors.light.onSurfaceVariant} />
-          <Text style={styles.emptyText}>No interview rounds logged yet</Text>
+        <View style={s.empty}>
+          <Ionicons name="calendar-outline" size={32} color={colors.onSurfaceVariant} />
+          <Text style={s.emptyText}>No interview rounds logged yet</Text>
         </View>
       )}
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
   container: { gap: 12 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderBottomColor: Colors.light.outline, paddingBottom: 12 },
-  title: { fontSize: Typography.label.lg, fontWeight: '700', fontFamily: Fonts.body, textTransform: 'uppercase', letterSpacing: 0.5, color: Colors.light.onSurface },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderBottomColor: c.outline, paddingBottom: 12 },
+  title: { fontSize: Typography.label.lg, fontWeight: '700', fontFamily: Fonts.body, textTransform: 'uppercase', letterSpacing: 0.5, color: c.onSurface },
   spacer: { flex: 1 },
   formFields: { gap: 12 },
-  label: { fontSize: Typography.label.md, fontWeight: '600', fontFamily: Fonts.body, color: Colors.light.onSurface, marginBottom: 4 },
-  input: { height: 44, borderRadius: 10, borderWidth: 1, borderColor: Colors.light.outline, paddingHorizontal: 12, fontSize: Typography.body.sm, fontFamily: Fonts.body, color: Colors.light.onSurface, backgroundColor: Colors.light.input },
-  textArea: { height: 80, paddingTop: 12, textAlignVertical: 'top' },
+  label: { fontSize: Typography.label.md, fontWeight: '600', fontFamily: Fonts.body, color: c.onSurface, marginBottom: 4 },
+  input: { borderRadius: 10, borderWidth: 1, borderColor: c.outline, paddingHorizontal: 12, fontSize: Typography.body.sm, fontFamily: Fonts.body, color: c.onSurface, backgroundColor: c.input },
   list: { gap: 8 },
-  roundItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: Colors.light.outline, backgroundColor: Colors.light.surface },
+  roundItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: c.outline, backgroundColor: c.surface },
   roundLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  roundIcon: { width: 36, height: 36, borderRadius: 8, backgroundColor: Colors.light.accentContainer, alignItems: 'center', justifyContent: 'center' },
-  roundType: { fontSize: Typography.body.sm, fontWeight: '600', fontFamily: Fonts.body, color: Colors.light.onSurface },
+  roundIcon: { width: 36, height: 36, borderRadius: 8, backgroundColor: c.accentContainer, alignItems: 'center', justifyContent: 'center' },
+  roundType: { fontSize: Typography.body.sm, fontWeight: '600', fontFamily: Fonts.body, color: c.onSurface },
   roundMeta: { flexDirection: 'row', gap: 4 },
-  roundMetaText: { fontSize: Typography.label.md, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant },
-  roundOutcome: { fontSize: Typography.label.sm, fontWeight: '600', fontFamily: Fonts.body, color: Colors.light.accent, marginTop: 2 },
+  roundMetaText: { fontSize: Typography.label.md, fontFamily: Fonts.body, color: c.onSurfaceVariant },
+  roundOutcome: { fontSize: Typography.label.sm, fontWeight: '600', fontFamily: Fonts.body, color: c.accent, marginTop: 2 },
   roundActions: { flexDirection: 'row', gap: 8 },
-  empty: { alignItems: 'center', padding: 24, borderWidth: 1, borderStyle: 'dashed', borderColor: Colors.light.outline, borderRadius: 12, gap: 8 },
-  emptyText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant },
+  empty: { alignItems: 'center', padding: 24, borderWidth: 1, borderStyle: 'dashed', borderColor: c.outline, borderRadius: 12, gap: 8 },
+  emptyText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: c.onSurfaceVariant },
 })
+
+const styles = getStyles(Colors.light)
 
 const RoundItem = React.memo(function RoundItem({
   round,
@@ -155,29 +159,31 @@ const RoundItem = React.memo(function RoundItem({
   onAddToCalendar: (round: InterviewRound) => Promise<void>
   onDelete: (id: string) => Promise<void>
 }) {
+  const colors = useColors()
+  const s = getStyles(colors)
   return (
-    <View style={styles.roundItem}>
-      <View style={styles.roundLeft}>
-        <View style={styles.roundIcon}>
-          <Ionicons name="calendar-outline" size={18} color={Colors.light.onAccentContainer} />
+    <View style={s.roundItem}>
+      <View style={s.roundLeft}>
+        <View style={s.roundIcon}>
+          <Ionicons name="calendar-outline" size={18} color={colors.onAccentContainer} />
         </View>
         <View>
-          <Text style={styles.roundType}>{ROUND_TYPES.find(r => r.value === round.roundType)?.label || round.roundType}</Text>
-          <View style={styles.roundMeta}>
-            {round.scheduledAt && <Text style={styles.roundMetaText}>{new Date(round.scheduledAt).toLocaleDateString()}</Text>}
-            {round.interviewerName && <Text style={styles.roundMetaText}>· {round.interviewerName}</Text>}
+          <Text style={s.roundType}>{ROUND_TYPES.find(r => r.value === round.roundType)?.label || round.roundType}</Text>
+          <View style={s.roundMeta}>
+            {round.scheduledAt && <Text style={s.roundMetaText}>{new Date(round.scheduledAt).toLocaleDateString()}</Text>}
+            {round.interviewerName && <Text style={s.roundMetaText}>· {round.interviewerName}</Text>}
           </View>
-          {round.outcome && <Text style={styles.roundOutcome}>{OUTCOMES.find(o => o.value === round.outcome)?.label}</Text>}
+          {round.outcome && <Text style={s.roundOutcome}>{OUTCOMES.find(o => o.value === round.outcome)?.label}</Text>}
         </View>
       </View>
-      <View style={styles.roundActions}>
+      <View style={s.roundActions}>
         {round.scheduledAt && (
           <Pressable onPress={() => onAddToCalendar(round)}>
-            <Ionicons name="calendar-outline" size={16} color={Colors.light.accent} />
+            <Ionicons name="calendar-outline" size={16} color={colors.accent} />
           </Pressable>
         )}
         <Pressable onPress={() => onDelete(round.id)}>
-          <Ionicons name="trash-outline" size={16} color={Colors.light.onSurfaceVariant} />
+          <Ionicons name="trash-outline" size={16} color={colors.onSurfaceVariant} />
         </Pressable>
       </View>
     </View>

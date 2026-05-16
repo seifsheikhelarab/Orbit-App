@@ -11,6 +11,7 @@ import { useApplication, useUpdateApplication, useDeleteApplication } from '@/fe
 
 export default function EditApplicationScreen() {
   const colors = useColors()
+  const s = getStyles(colors)
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { data: response, isLoading, isError, error } = useApplication(id!)
@@ -50,7 +51,7 @@ export default function EditApplicationScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loading}>
+      <View style={s.loading}>
         <Spinner size="large" />
       </View>
     )
@@ -58,11 +59,11 @@ export default function EditApplicationScreen() {
 
   if (isError) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.loading}>
+      <View style={[s.container, { paddingTop: insets.top }]}>
+        <View style={s.loading}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-          <Text style={styles.errorText}>Failed to load application</Text>
-          <Text style={styles.errorDetail}>{error?.message || 'An unexpected error occurred'}</Text>
+          <Text style={s.errorText}>Failed to load application</Text>
+          <Text style={s.errorDetail}>{error?.message || 'An unexpected error occurred'}</Text>
         </View>
       </View>
     )
@@ -71,13 +72,13 @@ export default function EditApplicationScreen() {
   if (!response?.data) return null
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button">
+    <View style={s.container}>
+      <View style={s.topBar}>
+        <Pressable onPress={() => router.back()} style={s.backBtn} accessibilityRole="button">
           <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
         </Pressable>
-        <Text style={styles.title}>Edit Application</Text>
-        <View style={styles.backBtn} />
+        <Text style={s.title}>Edit Application</Text>
+        <View style={s.backBtn} />
       </View>
       <ApplicationForm
         initialData={response.data}
@@ -90,17 +91,19 @@ export default function EditApplicationScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.background, gap: 12 },
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: c.background, gap: 12 },
   topBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: Colors.light.outlineVariant,
-    backgroundColor: Colors.light.surface,
+    paddingHorizontal: 20, paddingVertical: 20,
+    borderBottomWidth: 1, borderBottomColor: c.outlineVariant,
+    backgroundColor: c.surface,
   },
   backBtn: { width: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: Typography.headline.sm, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline, flex: 1, textAlign: 'center' },
-  errorText: { fontSize: Typography.title.lg, fontWeight: '600', color: Colors.light.error, fontFamily: Fonts.headline },
-  errorDetail: { fontSize: Typography.body.sm, color: Colors.light.onSurfaceVariant, textAlign: 'center', fontFamily: Fonts.body },
+  title: { fontSize: Typography.headline.sm, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline, flex: 1, textAlign: 'center' },
+  errorText: { fontSize: Typography.title.lg, fontWeight: '600', color: c.error, fontFamily: Fonts.headline },
+  errorDetail: { fontSize: Typography.body.sm, color: c.onSurfaceVariant, textAlign: 'center', fontFamily: Fonts.body },
 })
+
+const styles = getStyles(Colors.light)

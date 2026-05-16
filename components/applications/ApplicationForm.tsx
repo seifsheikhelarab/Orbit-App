@@ -2,7 +2,8 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Colors } from '@/constants/theme'
+import { Colors, Typography, Fonts } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
@@ -49,6 +50,8 @@ interface ApplicationFormProps {
 }
 
 function ApplicationForm({ initialData, onSubmit, isSubmitting, onDelete, isDeleting }: ApplicationFormProps) {
+  const colors = useColors()
+  const s = getStyles(colors)
   const { control, handleSubmit, formState: { errors } } = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
@@ -68,16 +71,16 @@ function ApplicationForm({ initialData, onSubmit, isSubmitting, onDelete, isDele
   })
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.fields}>
-        <View style={styles.row}>
-          <View style={styles.half}>
+    <ScrollView style={s.container} contentContainerStyle={s.content}>
+      <View style={s.fields}>
+        <View style={s.row}>
+          <View style={s.half}>
             <Label required>Company</Label>
             <Controller name="company" control={control} render={({ field: { onChange, onBlur, value } }) => (
               <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="Acme Corp" error={errors.company?.message} />
             )} />
           </View>
-          <View style={styles.half}>
+          <View style={s.half}>
             <Label required>Job Title</Label>
             <Controller name="jobTitle" control={control} render={({ field: { onChange, onBlur, value } }) => (
               <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="Backend Engineer" error={errors.jobTitle?.message} />
@@ -99,14 +102,14 @@ function ApplicationForm({ initialData, onSubmit, isSubmitting, onDelete, isDele
           )} />
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.half}>
+        <View style={s.row}>
+          <View style={s.half}>
             <Label>Location</Label>
             <Controller name="location" control={control} render={({ field: { onChange, onBlur, value } }) => (
               <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="Remote, New York..." />
             )} />
           </View>
-          <View style={styles.half}>
+          <View style={s.half}>
             <Label>Applied Date</Label>
             <Controller name="appliedDate" control={control} render={({ field: { onChange, onBlur, value } }) => (
               <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="YYYY-MM-DD" />
@@ -114,14 +117,14 @@ function ApplicationForm({ initialData, onSubmit, isSubmitting, onDelete, isDele
           </View>
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.half}>
+        <View style={s.row}>
+          <View style={s.half}>
             <Label>Min Salary</Label>
             <Controller name="salaryMin" control={control} render={({ field: { onChange, onBlur, value } }) => (
               <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="80000" keyboardType="numeric" />
             )} />
           </View>
-          <View style={styles.half}>
+          <View style={s.half}>
             <Label>Max Salary</Label>
             <Controller name="salaryMax" control={control} render={({ field: { onChange, onBlur, value } }) => (
               <Input onBlur={onBlur} onChangeText={onChange} value={value} placeholder="120000" keyboardType="numeric" />
@@ -143,7 +146,7 @@ function ApplicationForm({ initialData, onSubmit, isSubmitting, onDelete, isDele
           )} />
         </View>
 
-        <View style={styles.divider} />
+        <View style={s.divider} />
 
         <View>
           <Label>Follow-up Date</Label>
@@ -165,7 +168,7 @@ function ApplicationForm({ initialData, onSubmit, isSubmitting, onDelete, isDele
       </View>
 
       {onDelete && (
-        <View style={styles.deleteSection}>
+        <View style={s.deleteSection}>
           <Button variant="destructive" onPress={onDelete} disabled={isDeleting} loading={isDeleting}>Delete Application</Button>
         </View>
       )}
@@ -173,14 +176,16 @@ function ApplicationForm({ initialData, onSubmit, isSubmitting, onDelete, isDele
   )
 }
 
-const styles = StyleSheet.create({
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, gap: 24, paddingBottom: 40 },
   fields: { gap: 16 },
   row: { flexDirection: 'row', gap: 12 },
   half: { flex: 1 },
-  divider: { height: 1, backgroundColor: Colors.light.outline },
-  deleteSection: { borderTopWidth: 1, borderTopColor: Colors.light.outline, paddingTop: 16 },
+  divider: { height: 1, backgroundColor: c.outline },
+  deleteSection: { borderTopWidth: 1, borderTopColor: c.outline, paddingTop: 16 },
 })
+
+const styles = getStyles(Colors.light)
 
 export { ApplicationForm }

@@ -259,3 +259,36 @@ export const Shadows = {
     elevation: 12,
   },
 }
+
+export function getShadows(c: typeof Colors.light) {
+  return {
+    sm: {
+      shadowColor: c.onSurface,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    md: {
+      shadowColor: c.onSurface,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 16,
+      elevation: 4,
+    },
+    lg: {
+      shadowColor: c.onSurface,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.1,
+      shadowRadius: 32,
+      elevation: 8,
+    },
+    xl: {
+      shadowColor: c.onSurface,
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.12,
+      shadowRadius: 48,
+      elevation: 12,
+    },
+  }
+}

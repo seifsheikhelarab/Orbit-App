@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react'
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { View, Text, ScrollView, StyleSheet, Alert, Animated } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors, Typography, Fonts } from '@/constants/theme'
@@ -11,9 +12,22 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useAutoCV } from '@/features/profile/api/useProfile'
 import type { ResumeData } from '@/features/resumes/api/types'
+import { AnimationTiming } from '@/constants/animations'
 
 export default function AutoCVScreen() {
   const colors = useColors()
+  const insets = useSafeAreaInsets()
+  const s = getStyles(colors)
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(16)).current
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, ...AnimationTiming.easeOutQuart(400) }),
+      Animated.timing(slideAnim, { toValue: 0, ...AnimationTiming.easeOutQuart(400) }),
+    ]).start()
+  }, [])
+
   const [jd, setJd] = useState('')
   const generateCV = useAutoCV()
 
@@ -47,7 +61,7 @@ export default function AutoCVScreen() {
   }, [result])
 
   return (
-    <View style={styles.container}>
+    <View style={[s.container, { paddingTop: insets.top }]}>
       <PageHeader
         icon="sparkles-outline"
         iconVariant="accent"
@@ -59,23 +73,23 @@ export default function AutoCVScreen() {
         </Button> : undefined}
       />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} keyboardShouldPersistTaps="handled">
         {!result ? (
-          <>
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             {/* Input */}
             <Card>
               <CardContent>
-                <Text style={styles.inputLabel}>Job Description</Text>
-                <Text style={styles.inputHint}>
+                <Text style={s.inputLabel}>Job Description</Text>
+                <Text style={s.inputHint}>
                   Paste a full job description or a compelling summary. Our engine extracts signals, maps them against your dossier, and synthesizes a tailored version optimized for this specific opportunity.
                 </Text>
                 <Textarea
                   value={jd}
                   onChangeText={setJd}
                   placeholder={`Senior Software Engineer - Acme Corp\n\nWe are looking for...`}
-                  style={styles.textarea}
+                  style={s.textarea}
                 />
-                <View style={styles.actions}>
+                <View style={s.actions}>
                   <Button onPress={handleGenerate} loading={generateCV.isPending} disabled={generateCV.isPending}>
                       <Ionicons name="sparkles" size={14} color={colors.onPrimary} />
                     <Text style={{ color: colors.onPrimary, fontSize: Typography.label.sm, fontFamily: Fonts.body, marginLeft: 6 }}>
@@ -89,56 +103,56 @@ export default function AutoCVScreen() {
             {/* How it works */}
             <Card>
               <CardContent>
-                <Text style={styles.howTitle}>How It Works</Text>
-                <View style={styles.stepRow}>
-                  <View style={[styles.stepBadge, { backgroundColor: hexa(colors.accent, 0.08) }]}>
+                <Text style={s.howTitle}>How It Works</Text>
+                <View style={s.stepRow}>
+                  <View style={[s.stepBadge, { backgroundColor: hexa(colors.accent, 0.08) }]}>
                     <Ionicons name="document-text-outline" size={16} color={colors.accent} />
                   </View>
-                  <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>1. Paste the JD</Text>
-                    <Text style={styles.stepDesc}>Paste a job description or URL summary into the field above.</Text>
+                  <View style={s.stepContent}>
+                    <Text style={s.stepTitle}>1. Paste the JD</Text>
+                    <Text style={s.stepDesc}>Paste a job description or URL summary into the field above.</Text>
                   </View>
                 </View>
-                <View style={styles.stepRow}>
-                  <View style={[styles.stepBadge, { backgroundColor: hexa(colors.primary, 0.08) }]}>
+                <View style={s.stepRow}>
+                  <View style={[s.stepBadge, { backgroundColor: hexa(colors.primary, 0.08) }]}>
                     <Ionicons name="git-network-outline" size={16} color={colors.primary} />
                   </View>
-                  <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>2. Signal Extraction</Text>
-                    <Text style={styles.stepDesc}>Our engine maps every requirement against your existing dossier for maximum alignment.</Text>
+                  <View style={s.stepContent}>
+                    <Text style={s.stepTitle}>2. Signal Extraction</Text>
+                    <Text style={s.stepDesc}>Our engine maps every requirement against your existing dossier for maximum alignment.</Text>
                   </View>
                 </View>
-                <View style={styles.stepRow}>
-                  <View style={[styles.stepBadge, { backgroundColor: hexa(colors.success, 0.08) }]}>
+                <View style={s.stepRow}>
+                  <View style={[s.stepBadge, { backgroundColor: hexa(colors.success, 0.08) }]}>
                     <Ionicons name="sparkles" size={16} color={colors.success} />
                   </View>
-                  <View style={styles.stepContent}>
-                    <Text style={styles.stepTitle}>3. Synthesize & Save</Text>
-                    <Text style={styles.stepDesc}>Tailor and save the generated dossier, then attach it to a specific application.</Text>
+                  <View style={s.stepContent}>
+                    <Text style={s.stepTitle}>3. Synthesize & Save</Text>
+                    <Text style={s.stepDesc}>Tailor and save the generated dossier, then attach it to a specific application.</Text>
                   </View>
                 </View>
               </CardContent>
             </Card>
 
 
-          </>
+          </Animated.View>
         ) : (
-          <>
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             {/* Result */}
             <Card>
               <CardContent>
-                <View style={styles.resultHeader}>
+                <View style={s.resultHeader}>
                   <Ionicons name="checkmark-circle" size={24} color={colors.success} />
-                  <Text style={styles.resultTitle}>Dossier Synthesized</Text>
+                  <Text style={s.resultTitle}>Dossier Synthesized</Text>
                 </View>
-                <Text style={styles.resultDesc}>We generated a dossier targeting your specific opportunity. Review it below, then save it to your dossier management.</Text>
+                <Text style={s.resultDesc}>We generated a dossier targeting your specific opportunity. Review it below, then save it to your dossier management.</Text>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent>
-                <Text style={styles.inputLabel}>Tailored Summary</Text>
-                <Text style={styles.summaryText}>
+                <Text style={s.inputLabel}>Tailored Summary</Text>
+                <Text style={s.summaryText}>
                   {result.tailoredContent.resumeContent.basics.summary || 'No summary generated.'}
                 </Text>
               </CardContent>
@@ -146,8 +160,8 @@ export default function AutoCVScreen() {
 
             <Card>
               <CardContent>
-                <Text style={styles.inputLabel}>Cover Letter</Text>
-                <Text style={styles.coverText}>
+                <Text style={s.inputLabel}>Cover Letter</Text>
+                <Text style={s.coverText}>
                   {result.tailoredContent.coverLetter || 'No cover letter generated.'}
                 </Text>
               </CardContent>
@@ -155,48 +169,47 @@ export default function AutoCVScreen() {
 
             <Card>
               <CardContent>
-                <Text style={styles.inputLabel}>Key Skills</Text>
-                <View style={styles.skillsWrap}>
-                  {result.tailoredContent.resumeContent.skills.slice(0, 10).map((s, i) => (
-                    <View key={i} style={styles.skillBadge}>
-                      <Text style={styles.skillText}>{s.name}</Text>
+                <Text style={s.inputLabel}>Key Skills</Text>
+                <View style={s.skillsWrap}>
+                  {result.tailoredContent.resumeContent.skills.slice(0, 10).map((skill, i) => (
+                    <View key={i} style={s.skillBadge}>
+                      <Text style={s.skillText}>{skill.name}</Text>
                     </View>
                   ))}
                 </View>
               </CardContent>
             </Card>
-          </>
+          </Animated.View>
         )}
       </ScrollView>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingTop: 8, gap: 16, paddingBottom: 100 },
-  inputLabel: { fontSize: Typography.title.sm, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline },
-  inputHint: { fontSize: Typography.label.sm, color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body, marginTop: 4, marginBottom: 12, lineHeight: 16 },
+  scrollContent: { padding: 16, gap: 16, paddingBottom: 100 },
+  inputLabel: { fontSize: Typography.title.sm, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline },
+  inputHint: { fontSize: Typography.label.sm, color: c.onSurfaceVariant, fontFamily: Fonts.body, marginTop: 4, marginBottom: 12, lineHeight: 16 },
   textarea: { minHeight: 220 },
   actions: { marginTop: 16 },
-  howTitle: { fontSize: Typography.title.sm, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline, marginBottom: 16 },
+  howTitle: { fontSize: Typography.title.sm, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline, marginBottom: 16 },
   stepRow: { flexDirection: 'row', gap: 12, marginBottom: 14 },
   stepBadge: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   stepContent: { flex: 1 },
-  stepTitle: { fontSize: Typography.body.md, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline },
-  stepDesc: { fontSize: Typography.label.sm, color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body, marginTop: 2, lineHeight: 16 },
+  stepTitle: { fontSize: Typography.body.md, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline },
+  stepDesc: { fontSize: Typography.label.sm, color: c.onSurfaceVariant, fontFamily: Fonts.body, marginTop: 2, lineHeight: 16 },
   resultHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  resultTitle: { fontSize: Typography.body.lg, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline },
-  resultDesc: { fontSize: Typography.label.sm, color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body, lineHeight: 16 },
-  summaryText: { fontSize: Typography.body.sm, color: Colors.light.onSurface, fontFamily: Fonts.body, lineHeight: 20, marginTop: 12 },
-  coverText: { fontSize: Typography.body.sm, color: Colors.light.onSurface, fontFamily: Fonts.body, lineHeight: 20, marginTop: 12, fontStyle: 'italic' },
+  resultTitle: { fontSize: Typography.body.lg, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline },
+  resultDesc: { fontSize: Typography.label.sm, color: c.onSurfaceVariant, fontFamily: Fonts.body, lineHeight: 16 },
+  summaryText: { fontSize: Typography.body.sm, color: c.onSurface, fontFamily: Fonts.body, lineHeight: 20, marginTop: 12 },
+  coverText: { fontSize: Typography.body.sm, color: c.onSurface, fontFamily: Fonts.body, lineHeight: 20, marginTop: 12, fontStyle: 'italic' },
   skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   skillBadge: {
     paddingHorizontal: 12, paddingVertical: 6,
-    backgroundColor: Colors.light.surfaceContainer, borderRadius: 100,
-    borderWidth: 1, borderColor: Colors.light.outlineVariant,
+    backgroundColor: c.surfaceContainer, borderRadius: 100,
+    borderWidth: 1, borderColor: c.outlineVariant,
   },
-  skillText: { fontSize: Typography.label.md, fontWeight: '600', color: Colors.light.onSurface, fontFamily: Fonts.body },
+  skillText: { fontSize: Typography.label.md, fontWeight: '600', color: c.onSurface, fontFamily: Fonts.body },
 })
-

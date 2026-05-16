@@ -1,26 +1,52 @@
-import { forwardRef, useMemo } from 'react'
-import { TextInput, StyleSheet, type TextInputProps } from 'react-native'
+import { forwardRef, useState, useMemo } from 'react'
+import { View, TextInput, Text, StyleSheet, type TextInputProps, type ViewStyle } from 'react-native'
 import { useColors } from '@/hooks/useColors'
-import { Colors, Typography } from '@/constants/theme'
+import { Colors, Typography, Fonts } from '@/constants/theme'
 
-const Textarea = forwardRef<TextInput, TextInputProps>((props, ref) => {
+interface TextareaProps extends Omit<TextInputProps, 'style'> {
+  error?: string
+  hint?: string
+  containerStyle?: ViewStyle
+  style?: TextInputProps['style']
+}
+
+const Textarea = forwardRef<TextInput, TextareaProps>(({ error, hint, containerStyle, style, ...props }, ref) => {
   const colors = useColors()
   const styles = useMemo(() => getStyles(colors), [colors])
+  const [focused, setFocused] = useState(false)
+
   return (
-    <TextInput
-      ref={ref}
-      multiline
-      textAlignVertical="top"
-      style={styles.textarea}
-      placeholderTextColor={colors.onSurfaceVariant}
-      {...props}
-    />
+    <View style={[styles.wrapper, containerStyle]}>
+      <TextInput
+        ref={ref}
+        multiline
+        textAlignVertical="top"
+        style={[
+          styles.textarea,
+          focused && styles.focused,
+          error ? styles.errorBorder : null,
+        ]}
+        placeholderTextColor={colors.onSurfaceVariant}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        {...({ accessibilityInvalid: !!error } as any)}
+        {...props}
+      />
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : hint ? (
+        <Text style={styles.hintText}>{hint}</Text>
+      ) : null}
+    </View>
   )
 })
 Textarea.displayName = 'Textarea'
 
 function getStyles(c: typeof Colors.light) {
   return StyleSheet.create({
+    wrapper: {
+      gap: 4,
+    },
     textarea: {
       minHeight: 80,
       borderRadius: 12,
@@ -32,6 +58,24 @@ function getStyles(c: typeof Colors.light) {
       fontSize: Typography.body.sm,
       color: c.onSurface,
       lineHeight: 20,
+    },
+    focused: {
+      borderColor: c.primary,
+    },
+    errorBorder: {
+      borderColor: c.error,
+    },
+    errorText: {
+      fontSize: Typography.label.md,
+      color: c.error,
+      fontFamily: Fonts.body,
+      lineHeight: 18,
+    },
+    hintText: {
+      fontSize: Typography.label.md,
+      color: c.onSurfaceVariant,
+      fontFamily: Fonts.body,
+      lineHeight: 18,
     },
   })
 }

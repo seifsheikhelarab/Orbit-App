@@ -2,13 +2,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Stack, usePathname, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect, useState, useRef } from 'react'
-import { ActivityIndicator, Platform, View } from 'react-native'
+import { Platform, View } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import 'react-native-reanimated'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { Colors } from '@/constants/theme'
+import { useColorScheme } from '@/hooks/use-color-scheme'
 import { ReduceMotionProvider } from '@/hooks/useReduceMotion'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { LoadingFallback } from '@/components/shared/LoadingFallback'
 import * as Font from 'expo-font'
 import {
   Inter_400Regular,
@@ -62,6 +65,7 @@ export const unstable_settings = {
 const isNative = Platform.OS === 'ios' || Platform.OS === 'android'
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme()
   const [fontsLoaded, setFontsLoaded] = useState(false)
   const fontTimeout = useRef(false)
 
@@ -88,11 +92,7 @@ export default function RootLayout() {
   }, [])
 
   if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.background }}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
-      </View>
-    )
+    return <LoadingFallback />
   }
 
   return (
@@ -100,6 +100,7 @@ export default function RootLayout() {
       <ReduceMotionProvider>
         <ThemeProvider>
       <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
         <AuthProvider>
           <AuthGate>
           <Stack
@@ -129,9 +130,10 @@ export default function RootLayout() {
               }}
             />
           </Stack>
-          <StatusBar style="dark" />
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} backgroundColor={colorScheme === 'dark' ? Colors.dark.surface : Colors.light.surface} />
         </AuthGate>
       </AuthProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
         </ThemeProvider>
       </ReduceMotionProvider>

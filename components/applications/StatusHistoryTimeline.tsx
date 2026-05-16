@@ -1,6 +1,8 @@
+import { useMemo } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors, Typography, Fonts } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
 import { Spinner } from '@/components/ui/spinner'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -26,12 +28,15 @@ interface StatusHistoryTimelineProps {
 }
 
 function StatusHistoryTimeline({ items, isLoading }: StatusHistoryTimelineProps) {
+  const colors = useColors()
+  const styles = useMemo(() => getStyles(colors), [colors])
+
   if (isLoading) return <Spinner />
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Ionicons name="time-outline" size={16} color={Colors.light.primary} />
+        <Ionicons name="time-outline" size={16} color={colors.primary} />
         <Text style={styles.title}>Status History</Text>
       </View>
 
@@ -63,7 +68,7 @@ function StatusHistoryTimeline({ items, isLoading }: StatusHistoryTimelineProps)
         </View>
       ) : (
         <View style={styles.empty}>
-          <Ionicons name="time-outline" size={32} color={Colors.light.onSurfaceVariant} />
+          <Ionicons name="time-outline" size={32} color={colors.onSurfaceVariant} />
           <Text style={styles.emptyText}>No status history yet</Text>
           <Text style={styles.emptySubtext}>Status changes will appear here as they happen</Text>
         </View>
@@ -72,25 +77,27 @@ function StatusHistoryTimeline({ items, isLoading }: StatusHistoryTimelineProps)
   )
 }
 
-const styles = StyleSheet.create({
-  container: { gap: 12 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderBottomColor: Colors.light.outline, paddingBottom: 12 },
-  title: { fontSize: Typography.label.lg, fontFamily: Fonts.headline, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: Colors.light.onSurface },
-  timelineItem: { flexDirection: 'row', gap: 12 },
-  line: { alignItems: 'center', width: 20 },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.light.outline, borderWidth: 2, borderColor: Colors.light.surface, marginTop: 4 },
-  dotActive: { backgroundColor: Colors.light.primary },
-  connector: { width: 2, flex: 1, backgroundColor: Colors.light.outline, marginVertical: 2 },
-  card: { flex: 1, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: Colors.light.outline, backgroundColor: Colors.light.surface, marginBottom: 8 },
-  changeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statusText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: Colors.light.onSurface },
-  statusLabel: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant },
-  arrow: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant },
-  date: { fontSize: Typography.label.sm, fontFamily: Fonts.body, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: Colors.light.onSurfaceVariant, marginTop: 4 },
-  note: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant, marginTop: 4 },
-  empty: { alignItems: 'center', padding: 24, borderWidth: 1, borderStyle: 'dashed', borderColor: Colors.light.outline, borderRadius: 12, gap: 4 },
-  emptyText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant },
-  emptySubtext: { fontSize: Typography.label.md, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant },
-})
+function getStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    container: { gap: 12 },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderBottomColor: c.outline, paddingBottom: 12 },
+    title: { fontSize: Typography.label.lg, fontFamily: Fonts.headline, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: c.onSurface },
+    timelineItem: { flexDirection: 'row', gap: 12 },
+    line: { alignItems: 'center', width: 20 },
+    dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.outline, borderWidth: 2, borderColor: c.surface, marginTop: 4 },
+    dotActive: { backgroundColor: c.primary },
+    connector: { width: 2, flex: 1, backgroundColor: c.outline, marginVertical: 2 },
+    card: { flex: 1, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: c.outline, backgroundColor: c.surface, marginBottom: 8 },
+    changeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    statusText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: c.onSurface },
+    statusLabel: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: c.onSurfaceVariant },
+    arrow: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: c.onSurfaceVariant },
+    date: { fontSize: Typography.label.sm, fontFamily: Fonts.body, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: c.onSurfaceVariant, marginTop: 4 },
+    note: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: c.onSurfaceVariant, marginTop: 4 },
+    empty: { alignItems: 'center', padding: 24, borderWidth: 1, borderStyle: 'dashed', borderColor: c.outline, borderRadius: 12, gap: 4 },
+    emptyText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: c.onSurfaceVariant },
+    emptySubtext: { fontSize: Typography.label.md, fontFamily: Fonts.body, color: c.onSurfaceVariant },
+  })
+}
 
 export { StatusHistoryTimeline }

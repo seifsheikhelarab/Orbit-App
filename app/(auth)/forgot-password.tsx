@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, Animated, KeyboardAvoidingView, Platform } from 'react-native'
 import { Link } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -36,6 +36,8 @@ export default function ForgotPasswordScreen() {
       setLoading(false)
     }
   }
+
+  const styles = useMemo(() => getStyles(colors), [colors])
 
   if (sent) {
     return (
@@ -109,92 +111,93 @@ export default function ForgotPasswordScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-    paddingVertical: 48,
-  },
-  card: {
-    backgroundColor: Colors.light.surface,
-    borderRadius: 16,
-    padding: 32,
-    shadowColor: Colors.light.onSurface,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  backLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  backLinkSubText: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
-  },
-  backLinkText: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    fontWeight: '600',
-    color: Colors.light.primary,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: Colors.light.accentContainer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: Typography.headline.md,
-    fontFamily: Fonts.headline,
-    fontWeight: '700',
-    color: Colors.light.onSurface,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  emailText: {
-    fontWeight: '700',
-    color: Colors.light.onSurface,
-  },
-  sentContainer: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  sentIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.light.successContainer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  field: {
-    gap: 6,
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    fontWeight: '600',
-    color: Colors.light.onSurface,
-  },
-
-})
+function getStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      padding: 24,
+      paddingVertical: 48,
+    },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 16,
+      padding: 32,
+      shadowColor: c.onSurface,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.08,
+      shadowRadius: 24,
+      elevation: 8,
+    },
+    backLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    backLinkSubText: {
+      fontSize: Typography.body.sm,
+      fontFamily: Fonts.body,
+      color: c.onSurfaceVariant,
+    },
+    backLinkText: {
+      fontSize: Typography.body.sm,
+      fontFamily: Fonts.body,
+      fontWeight: '600',
+      color: c.primary,
+    },
+    iconContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: c.accentContainer,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
+    },
+    title: {
+      fontSize: Typography.headline.md,
+      fontFamily: Fonts.headline,
+      fontWeight: '700',
+      color: c.onSurface,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: Typography.body.sm,
+      fontFamily: Fonts.body,
+      color: c.onSurfaceVariant,
+      lineHeight: 20,
+      marginBottom: 24,
+    },
+    emailText: {
+      fontWeight: '700',
+      color: c.onSurface,
+    },
+    sentContainer: {
+      alignItems: 'center',
+      paddingVertical: 16,
+    },
+    sentIcon: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: c.successContainer,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 24,
+    },
+    field: {
+      gap: 6,
+      marginBottom: 20,
+    },
+    label: {
+      fontSize: Typography.body.sm,
+      fontFamily: Fonts.body,
+      fontWeight: '600',
+      color: c.onSurface,
+    },
+  })
+}

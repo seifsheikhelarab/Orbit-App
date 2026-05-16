@@ -1,21 +1,29 @@
-import { forwardRef, useState, useMemo } from 'react'
-import { View, TextInput, Text, StyleSheet, type TextInputProps, type ViewStyle } from 'react-native'
+import { forwardRef, useState, useMemo, useCallback } from 'react'
+import { View, TextInput, Text, Pressable, StyleSheet, type TextInputProps, type ViewStyle } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useColors } from '@/hooks/useColors'
 import { Colors, Typography, Fonts } from '@/constants/theme'
 
 interface InputProps extends Omit<TextInputProps, 'style'> {
   error?: string
   hint?: string
-  containerStyle?: ViewStyle
+  containerStyle?: ViewStyle | ViewStyle[]
   left?: React.ReactNode
   right?: React.ReactNode
+  clearable?: boolean
 }
 
 const Input = forwardRef<TextInput, InputProps>(
-  ({ error, hint, left, right, containerStyle, ...props }, ref) => {
+  ({ error, hint, left, right, clearable, containerStyle, onChangeText, value, ...props }, ref) => {
     const colors = useColors()
     const styles = useMemo(() => getStyles(colors), [colors])
     const [focused, setFocused] = useState(false)
+
+    const handleClear = useCallback(() => {
+      onChangeText?.('')
+    }, [onChangeText])
+
+    const showClear = clearable && value && value.length > 0 && focused
 
     return (
       <View style={[styles.wrapper, containerStyle]}>
@@ -27,6 +35,8 @@ const Input = forwardRef<TextInput, InputProps>(
           {left && <View style={styles.side}>{left}</View>}
           <TextInput
             ref={ref}
+            value={value}
+            onChangeText={onChangeText}
             style={styles.input}
             placeholderTextColor={colors.onSurfaceVariant}
             onFocus={() => setFocused(true)}
@@ -34,12 +44,22 @@ const Input = forwardRef<TextInput, InputProps>(
             {...({ accessibilityInvalid: !!error } as any)}
             {...props}
           />
-          {right && <View style={styles.side}>{right}</View>}
+          {showClear && (
+            <Pressable
+              onPress={handleClear}
+              style={styles.clearButton}
+              accessibilityRole="button"
+              accessibilityLabel="Clear input"
+            >
+              <Ionicons name="close-circle" size={16} color={colors.onSurfaceVariant} />
+            </Pressable>
+          )}
+          {right && !showClear && <View style={styles.side}>{right}</View>}
         </View>
         {error ? (
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText} numberOfLines={2}>{error}</Text>
         ) : hint ? (
-          <Text style={styles.hintText}>{hint}</Text>
+          <Text style={styles.hintText} numberOfLines={2}>{hint}</Text>
         ) : null}
       </View>
     )
@@ -77,15 +97,21 @@ function getStyles(c: typeof Colors.light) {
     side: {
       marginHorizontal: 4,
     },
+    clearButton: {
+      padding: 4,
+      marginLeft: 4,
+    },
     errorText: {
       fontSize: Typography.label.md,
       color: c.error,
       fontFamily: Fonts.body,
+      lineHeight: 18,
     },
     hintText: {
       fontSize: Typography.label.md,
       color: c.onSurfaceVariant,
       fontFamily: Fonts.body,
+      lineHeight: 18,
     },
   })
 }

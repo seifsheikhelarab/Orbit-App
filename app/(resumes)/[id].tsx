@@ -16,6 +16,7 @@ import * as Sharing from 'expo-sharing'
 import { Colors, Typography, Fonts } from '@/constants/theme'
 import { hexa } from '@/lib/opacity'
 import { useColors } from '@/hooks/useColors'
+import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -56,6 +57,7 @@ function EntryPanel({
   children: React.ReactNode
 }) {
   const colors = useColors()
+  const entryStyles = useMemo(() => getEntryStyles(colors), [colors])
   const [open, setOpen] = useState(defaultOpen ?? false)
 
   return (
@@ -89,76 +91,81 @@ function EntryPanel({
   )
 }
 
-const entryStyles = StyleSheet.create({
-  container: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.light.outline,
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 12,
-  },
-  headerOpen: {
-    borderBottomWidth: 1,
-    borderBottomColor: hexa(Colors.light.outline, 0.31),
-  },
-  title: {
-    fontSize: Typography.body.md,
-    fontWeight: '600',
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.body,
-  },
-  titleOpen: {
-    color: Colors.light.primary,
-  },
-  meta: {
-    fontSize: Typography.body.sm,
-    color: Colors.light.onSurfaceVariant,
-    marginTop: 2,
-    fontFamily: Fonts.body,
-  },
-  content: {
-    padding: 16,
-    gap: 14,
-    backgroundColor: hexa(Colors.light.surfaceContainerLow, 0.19),
-  },
-  flex1: { flex: 1 },
-  rowGap12: { flexDirection: 'row', gap: 12 },
-  errorChip: { color: Colors.light.onError, fontSize: Typography.label.md, marginLeft: 6, fontFamily: Fonts.body },
-  secondaryChip: { color: Colors.light.onSecondaryContainer, fontSize: Typography.label.md, marginLeft: 6, fontFamily: Fonts.body },
-  nameInput: {
-    fontSize: Typography.title.md,
-    fontWeight: '700',
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.headline,
-    padding: 0,
-    margin: 0,
-  },
-  colorSwatch: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-  },
-  colorSwatchActive: {
-    borderWidth: 3,
-    borderColor: Colors.light.surface,
-    transform: [{ scale: 1.1 }],
-    elevation: 6,
-  },
-  colorPickerRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-})
+function getEntryStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    container: {
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: c.outline,
+      overflow: 'hidden',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      gap: 12,
+    },
+    headerOpen: {
+      borderBottomWidth: 1,
+      borderBottomColor: hexa(c.outline, 0.31),
+    },
+    title: {
+      fontSize: Typography.body.md,
+      fontWeight: '600',
+      color: c.onSurface,
+      fontFamily: Fonts.body,
+    },
+    titleOpen: {
+      color: c.primary,
+    },
+    meta: {
+      fontSize: Typography.body.sm,
+      color: c.onSurfaceVariant,
+      marginTop: 2,
+      fontFamily: Fonts.body,
+    },
+    content: {
+      padding: 16,
+      gap: 14,
+      backgroundColor: hexa(c.surfaceContainerLow, 0.19),
+    },
+    flex1: { flex: 1 },
+    rowGap12: { flexDirection: 'row', gap: 12 },
+    errorChip: { color: c.onError, fontSize: Typography.label.md, marginLeft: 6, fontFamily: Fonts.body },
+    secondaryChip: { color: c.onSecondaryContainer, fontSize: Typography.label.md, marginLeft: 6, fontFamily: Fonts.body },
+    nameInput: {
+      fontSize: Typography.title.md,
+      fontWeight: '700',
+      color: c.onSurface,
+      fontFamily: Fonts.headline,
+      padding: 0,
+      margin: 0,
+    },
+    colorSwatch: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+    },
+    colorSwatchActive: {
+      borderWidth: 3,
+      borderColor: c.surface,
+      transform: [{ scale: 1.1 }],
+      elevation: 6,
+    },
+    colorPickerRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+    },
+  })
+}
 
 export default function BuilderScreen() {
   const colors = useColors()
   const { id } = useLocalSearchParams<{ id: string }>()
+  const entryStyles = useMemo(() => getEntryStyles(colors), [colors])
+  const styles = useMemo(() => getBuilderStyles(colors), [colors])
+  const skillStyles = useMemo(() => getSkillStyles(colors), [colors])
   const { data: response, isLoading, isError } = useResume(id ?? '')
   const updateResume = useUpdateResume()
   const document = response?.data
@@ -1463,68 +1470,72 @@ export default function BuilderScreen() {
   )
 }
 
-const skillStyles = StyleSheet.create({
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: Colors.light.surfaceContainer,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: Colors.light.outline,
-  },
-  chipText: {
-    fontSize: Typography.body.sm,
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.body,
-  },
-})
+function getSkillStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: c.surfaceContainer,
+      borderRadius: 100,
+      borderWidth: 1,
+      borderColor: c.outline,
+    },
+    chipText: {
+      fontSize: Typography.body.sm,
+      color: c.onSurface,
+      fontFamily: Fonts.body,
+    },
+  })
+}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  emptyLoading: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.light.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.outline,
-    backgroundColor: hexa(Colors.light.surface, 0.80),
-  },
-  backButton: {
-    padding: 4,
-  },
+function getBuilderStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    emptyLoading: {
+      flex: 1,
+      backgroundColor: c.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    loadingContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: c.outlineVariant,
+      backgroundColor: c.surface,
+    },
+    backButton: {
+      padding: 4,
+    },
 
-  docType: {
-    fontSize: Typography.body.sm,
-    color: Colors.light.onSurfaceVariant,
-    marginTop: 1,
-    fontFamily: Fonts.body,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 60,
-    gap: 16,
-  },
-})
+    docType: {
+      fontSize: Typography.body.sm,
+      color: c.onSurfaceVariant,
+      marginTop: 1,
+      fontFamily: Fonts.body,
+    },
+    scrollArea: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: 16,
+      paddingBottom: 60,
+      gap: 16,
+    },
+  })
+}

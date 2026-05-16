@@ -1,15 +1,17 @@
-import { useState, useCallback } from 'react'
-import { View, Text, Pressable, FlatList, StyleSheet, Alert, RefreshControl } from 'react-native'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { View, Text, Pressable, FlatList, StyleSheet, Alert, RefreshControl, Animated } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors, Typography, Fonts, Shadows } from '@/constants/theme'
+import { Colors, Typography, Fonts, getShadows } from '@/constants/theme'
 import { useColors } from '@/hooks/useColors'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { ApiError } from '@/components/shared/ApiError'
+import { AnimationTiming } from '@/constants/animations'
 import {
   useResumes,
   useDeleteResume,
@@ -30,8 +32,9 @@ const tabs: { key: ResumeType; label: string; icon: keyof typeof Ionicons.glyphM
 export default function ResumesListScreen() {
   const colors = useColors()
   const insets = useSafeAreaInsets()
+  const styles = useMemo(() => getStyles(colors), [colors])
   const [activeTab, setActiveTab] = useState<ResumeType>('RESUME')
-  const { data: response, isLoading, refetch, isRefetching } = useResumes(1, 50, activeTab)
+  const { data: response, isLoading, isError, error, refetch, isRefetching } = useResumes(1, 50, activeTab)
   const deleteResume = useDeleteResume()
   const createResume = useCreateResume()
   const [isCreating, setIsCreating] = useState(false)
@@ -100,6 +103,15 @@ export default function ResumesListScreen() {
     [createResume],
   )
 
+  const listOpacity = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.timing(listOpacity, {
+      toValue: 1,
+      ...AnimationTiming.easeOutQuart(400),
+    }).start()
+  }, [])
+
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -119,6 +131,20 @@ export default function ResumesListScreen() {
     )
   }
 
+  if (isError) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <PageHeader
+          icon="document-text-outline"
+          iconVariant="accent"
+          title="My Documents"
+          subtitle="Manage resumes and cover letters"
+        />
+        <ApiError message={(error as any)?.userMessage || (error as any)?.message} onRetry={() => refetch()} fullScreen />
+      </View>
+    )
+  }
+
   const items = response?.data || []
 
   return (
@@ -129,14 +155,12 @@ export default function ResumesListScreen() {
         title="My Documents"
         subtitle="Manage resumes and cover letters"
         right={
-          <Button onPress={() => handleCreate(activeTab)} disabled={isCreating}>
-            <Ionicons name="add" size={16} color={colors.onPrimary} />
-            <Text style={{ color: colors.onPrimary, fontWeight: '600', fontSize: Typography.body.sm, fontFamily: Fonts.body }}>
-              {' '}{activeTab === 'RESUME' ? 'Resume' : 'Cover Letter'}
-            </Text>
+          <Button size="sm" onPress={() => handleCreate(activeTab)} disabled={isCreating}>
+            <Ionicons name="add" size={14} color={colors.onPrimary} />
           </Button>
         }
       />
+      <Animated.View style={{ flex: 1, opacity: listOpacity }}>
       <FlatList
         data={items}
         keyExtractor={(item: Resume) => item.id}
@@ -198,6 +222,7 @@ export default function ResumesListScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       />
+      </Animated.View>
     </View>
   )
 }
@@ -214,6 +239,7 @@ function ResumeCard({
   isCreating: boolean
 }) {
   const colors = useColors()
+  const styles = useMemo(() => getStyles(colors), [colors])
   return (
     <Pressable
       onPress={() => router.push(`/(resumes)/${item.id}` as const)}
@@ -242,58 +268,60 @@ function ResumeCard({
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
-  scrollContent: { padding: 16, paddingBottom: 100 },
-  loadingContainer: { gap: 16, padding: 16 },
-  tabRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
-  },
-  tab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 100,
-    backgroundColor: Colors.light.surfaceContainer,
-    borderWidth: 1,
-    borderColor: Colors.light.outlineVariant,
-  },
-  tabActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-    ...Shadows.sm,
-  },
-  tabText: {
-    fontSize: Typography.label.md,
-    fontWeight: '600',
-    color: Colors.light.onSurfaceVariant,
-    fontFamily: Fonts.body,
-  },
-  tabTextActive: { color: Colors.light.onPrimary },
-  list: { paddingBottom: 100 },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardInfo: { flex: 1, gap: 2 },
-  cardName: {
-    fontSize: Typography.body.md,
-    fontWeight: '600',
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.body,
-  },
-  cardMeta: {
-    fontSize: Typography.body.sm,
-    color: Colors.light.onSurfaceVariant,
-    fontFamily: Fonts.body,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-})
+function getStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    scrollContent: { padding: 16, paddingBottom: 100 },
+    loadingContainer: { gap: 16, padding: 16 },
+    tabRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginBottom: 20,
+    },
+    tab: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 100,
+      backgroundColor: c.surfaceContainer,
+      borderWidth: 1,
+      borderColor: c.outlineVariant,
+    },
+    tabActive: {
+      backgroundColor: c.primary,
+      borderColor: c.primary,
+      ...getShadows(c).sm,
+    },
+    tabText: {
+      fontSize: Typography.label.md,
+      fontWeight: '600',
+      color: c.onSurfaceVariant,
+      fontFamily: Fonts.body,
+    },
+    tabTextActive: { color: c.onPrimary },
+    list: { paddingBottom: 100 },
+    cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    cardInfo: { flex: 1, gap: 2 },
+    cardName: {
+      fontSize: Typography.body.md,
+      fontWeight: '600',
+      color: c.onSurface,
+      fontFamily: Fonts.body,
+    },
+    cardMeta: {
+      fontSize: Typography.body.sm,
+      color: c.onSurfaceVariant,
+      fontFamily: Fonts.body,
+    },
+    cardActions: {
+      flexDirection: 'row',
+      gap: 4,
+    },
+  })
+}

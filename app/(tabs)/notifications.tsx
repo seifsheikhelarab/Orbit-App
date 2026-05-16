@@ -10,13 +10,14 @@ import { Card } from '@/components/ui/card'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StaggeredList } from '@/components/shared/StaggeredList'
 import { Button } from '@/components/ui/button'
+import { ApiError } from '@/components/shared/ApiError'
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, useSnoozeNotification, useDismissNotification, type Notification } from '@/features/notifications/api/useNotifications'
 
 export default function NotificationsScreen() {
   const colors = useColors()
   const insets = useSafeAreaInsets()
   const router = useRouter()
-  const { data: notifications, isLoading, refetch, isRefetching } = useNotifications()
+  const { data: notifications, isLoading, isError, error, refetch, isRefetching } = useNotifications()
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
   const snooze = useSnoozeNotification()
@@ -46,10 +47,10 @@ export default function NotificationsScreen() {
   }, [router])
 
   return (
-    <View style={styles.container}>
+    <View style={[getStyles(colors).container, { paddingTop: insets.top }]}>
       <PageHeader
-        icon="notifications"
-        iconVariant="primary"
+        icon="notifications-outline"
+        iconVariant="accent"
         title="Notifications"
         subtitle={unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
         badge={unreadCount}
@@ -64,20 +65,22 @@ export default function NotificationsScreen() {
       />
 
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        style={getStyles(colors).scroll}
+        contentContainerStyle={getStyles(colors).scrollContent}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
         }
       >
         {isLoading ? (
-          <View style={styles.loadingWrap}>
+          <View style={getStyles(colors).loadingWrap}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
+        ) : isError ? (
+          <ApiError message={(error as any)?.userMessage || (error as any)?.message} onRetry={() => refetch()} fullScreen />
         ) : notifications && notifications.length > 0 ? (
           <StaggeredList staggerDelay={50} initialDelay={80} direction="up">
             {notifications.map((notification: Notification) => (
-              <View key={notification.id} style={styles.cardGap}>
+              <View key={notification.id} style={getStyles(colors).cardGap}>
                 <NotificationCard
                   notification={notification}
                   onMarkAsRead={handleMarkAsRead}
@@ -89,12 +92,12 @@ export default function NotificationsScreen() {
             ))}
           </StaggeredList>
         ) : (
-          <View style={styles.emptyWrap}>
-            <View style={styles.emptyIconWrap}>
+          <View style={getStyles(colors).emptyWrap}>
+            <View style={getStyles(colors).emptyIconWrap}>
               <Ionicons name="notifications-off-outline" size={32} color={colors.onSurfaceVariant} />
             </View>
-            <Text style={styles.emptyTitle}>No notifications</Text>
-            <Text style={styles.emptyDesc}>You're all caught up!</Text>
+            <Text style={getStyles(colors).emptyTitle}>No notifications</Text>
+            <Text style={getStyles(colors).emptyDesc}>You're all caught up!</Text>
           </View>
         )}
       </ScrollView>
@@ -122,48 +125,48 @@ const NotificationCard = React.memo(function NotificationCard({
   return (
     <Pressable
       onPress={() => onNavigate(notification.applicationId ?? null)}
-      style={({ pressed }) => [pressed && styles.cardPressed]}
+      style={({ pressed }) => [pressed && getStyles(colors).cardPressed]}
     >
       <Card
         notification
         notificationUnread={isUnread}
         notificationOverdue={isOverdue}
       >
-        <View style={styles.cardInner}>
-          <View style={styles.cardLeft}>
-            <View style={[styles.dot, isUnread ? styles.dotUnread : styles.dotRead]} />
+        <View style={getStyles(colors).cardInner}>
+          <View style={getStyles(colors).cardLeft}>
+            <View style={[getStyles(colors).dot, isUnread ? getStyles(colors).dotUnread : getStyles(colors).dotRead]} />
           </View>
-          <View style={styles.cardBody}>
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, !isUnread && styles.cardTitleDim]} numberOfLines={1}>
+          <View style={getStyles(colors).cardBody}>
+            <View style={getStyles(colors).cardHeader}>
+              <Text style={[getStyles(colors).cardTitle, !isUnread && getStyles(colors).cardTitleDim]} numberOfLines={1}>
                 {notification.title}
               </Text>
-              <Text style={styles.cardTime}>
+              <Text style={getStyles(colors).cardTime}>
                 {format(new Date(notification.createdAt), 'MMM d, h:mm a')}
               </Text>
             </View>
             {notification.body && (
-              <Text style={styles.cardBodyText} numberOfLines={2}>
+              <Text style={getStyles(colors).cardBodyText} numberOfLines={2}>
                 {notification.body}
               </Text>
             )}
             {notification.jobTitle && (
-              <Text style={styles.cardMeta}>
+              <Text style={getStyles(colors).cardMeta}>
                 {notification.jobTitle}
                 {notification.company && ` at ${notification.company}`}
               </Text>
             )}
-            <View style={styles.cardActions}>
+            <View style={getStyles(colors).cardActions}>
               {isUnread && (
-                <Pressable onPress={(e) => { e.stopPropagation(); onMarkAsRead(notification.id) }} style={styles.actionBtn} accessibilityRole="button">
-                  <Text style={styles.actionText}>Mark read</Text>
+                <Pressable onPress={(e) => { e.stopPropagation(); onMarkAsRead(notification.id) }} style={getStyles(colors).actionBtn} accessibilityRole="button">
+                  <Text style={getStyles(colors).actionText}>Mark read</Text>
                 </Pressable>
               )}
-              <Pressable onPress={(e) => { e.stopPropagation(); onSnooze(notification.id, 3) }} style={styles.actionBtn} accessibilityRole="button">
-                <Text style={styles.actionText}>Snooze</Text>
+              <Pressable onPress={(e) => { e.stopPropagation(); onSnooze(notification.id, 3) }} style={getStyles(colors).actionBtn} accessibilityRole="button">
+                <Text style={getStyles(colors).actionText}>Snooze</Text>
               </Pressable>
-              <Pressable onPress={(e) => { e.stopPropagation(); onDismiss(notification.id) }} style={styles.actionBtn} accessibilityRole="button">
-                <Text style={[styles.actionText, styles.actionDanger]}>Dismiss</Text>
+              <Pressable onPress={(e) => { e.stopPropagation(); onDismiss(notification.id) }} style={getStyles(colors).actionBtn} accessibilityRole="button">
+                <Text style={[getStyles(colors).actionText, getStyles(colors).actionDanger]}>Dismiss</Text>
               </Pressable>
             </View>
           </View>
@@ -173,17 +176,16 @@ const NotificationCard = React.memo(function NotificationCard({
   )
 })
 
-const styles = StyleSheet.create({
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
+    backgroundColor: c.background,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
-    paddingTop: 8,
     gap: 12,
     paddingBottom: 100,
   },
@@ -202,7 +204,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 16,
-    backgroundColor: Colors.light.surfaceContainerHigh,
+    backgroundColor: c.surfaceContainerHigh,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -210,13 +212,13 @@ const styles = StyleSheet.create({
     fontSize: Typography.headline.sm,
     fontWeight: '700',
     fontFamily: Fonts.headline,
-    color: Colors.light.onSurface,
+    color: c.onSurface,
     textAlign: 'center',
   },
   emptyDesc: {
     fontSize: Typography.body.sm,
     fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
+    color: c.onSurfaceVariant,
     textAlign: 'center',
   },
   cardPressed: {
@@ -238,7 +240,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   dotUnread: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: c.primary,
   },
   dotRead: {
     backgroundColor: 'transparent',
@@ -257,28 +259,28 @@ const styles = StyleSheet.create({
     fontSize: Typography.body.sm,
     fontWeight: '600',
     fontFamily: Fonts.body,
-    color: Colors.light.onSurface,
+    color: c.onSurface,
     flex: 1,
   },
   cardTitleDim: {
-    color: Colors.light.onSurfaceVariant,
+    color: c.onSurfaceVariant,
   },
   cardTime: {
     fontSize: Typography.label.sm,
     fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
+    color: c.onSurfaceVariant,
     flexShrink: 0,
   },
   cardBodyText: {
     fontSize: Typography.label.lg,
     fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
+    color: c.onSurfaceVariant,
     lineHeight: 18,
   },
   cardMeta: {
     fontSize: Typography.label.lg,
     fontFamily: Fonts.body,
-    color: Colors.light.primary,
+    color: c.primary,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -292,9 +294,9 @@ const styles = StyleSheet.create({
     fontSize: Typography.label.sm,
     fontWeight: '600',
     fontFamily: Fonts.body,
-    color: Colors.light.primary,
+    color: c.primary,
   },
   actionDanger: {
-    color: Colors.light.error,
+    color: c.error,
   },
 })

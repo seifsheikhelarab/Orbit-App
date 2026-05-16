@@ -17,6 +17,7 @@ import { useContacts, useCreateContact, useDeleteContact, useInterviewRounds, us
 
 export default function ApplicationDetailScreen() {
   const colors = useColors()
+  const s = getStyles(colors)
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { data: response, isLoading, isError } = useApplication(id!)
@@ -48,10 +49,10 @@ export default function ApplicationDetailScreen() {
 
   if (isError || !response?.data) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={s.errorContainer}>
         <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-        <Text style={styles.errorText}>Application not found</Text>
-        <Text style={styles.errorHint}>This application may have been deleted or the link may be incorrect.</Text>
+        <Text style={s.errorText}>Application not found</Text>
+        <Text style={s.errorHint}>This application may have been deleted or the link may be incorrect.</Text>
         <Button onPress={() => router.back()}>Go back to applications</Button>
       </View>
     )
@@ -60,8 +61,8 @@ export default function ApplicationDetailScreen() {
   const app = response.data
 
   return (
-    <ScrollView style={[styles.container, { paddingTop: insets.top + 16 }]} contentContainerStyle={styles.content}>
-      <View style={styles.topBar}>
+    <ScrollView style={[s.container, { paddingTop: insets.top + 16 }]} contentContainerStyle={s.content}>
+      <View style={s.topBar}>
         <Pressable onPress={() => router.back()} accessibilityRole="button">
           <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
         </Pressable>
@@ -70,35 +71,35 @@ export default function ApplicationDetailScreen() {
         </Pressable>
       </View>
 
-      <View style={styles.titleSection}>
-        <View style={styles.titleRow}>
-          <Text style={styles.company}>{app.company}</Text>
+      <View style={s.titleSection}>
+        <View style={s.titleRow}>
+          <Text style={s.company}>{app.company}</Text>
           <StatusBadge status={app.applicationStatus} />
         </View>
-        <Text style={styles.jobTitle}>{app.jobTitle}</Text>
+        <Text style={s.jobTitle}>{app.jobTitle}</Text>
       </View>
 
       <Card variant="elevated" accentPosition="left" accentColor={colors.accent}>
         <CardContent>
-          <View style={styles.detailGrid}>
+          <View style={s.detailGrid}>
             {app.location && (
-              <View style={styles.detailItem}>
-                <View style={styles.detailIcon}>
+              <View style={s.detailItem}>
+                <View style={s.detailIcon}>
                   <Ionicons name="location-outline" size={18} color={colors.primary} />
                 </View>
                 <View>
-                  <Text style={styles.detailLabel}>Location</Text>
-                  <Text style={styles.detailValue}>{app.location}</Text>
+                  <Text style={s.detailLabel}>Location</Text>
+                  <Text style={s.detailValue}>{app.location}</Text>
                 </View>
               </View>
             )}
-            <View style={styles.detailItem}>
-              <View style={styles.detailIcon}>
+            <View style={s.detailItem}>
+              <View style={s.detailIcon}>
                 <Ionicons name="cash-outline" size={18} color={colors.primary} />
               </View>
               <View>
-                <Text style={styles.detailLabel}>Compensation</Text>
-                <Text style={styles.detailValue}>
+                <Text style={s.detailLabel}>Compensation</Text>
+                <Text style={s.detailValue}>
                   {app.salaryMin || app.salaryMax
                     ? `${app.salaryMin ? `$${app.salaryMin.toLocaleString()}` : '?'} - ${app.salaryMax ? `$${app.salaryMax.toLocaleString()}` : '?'}`
                     : 'Undisclosed'}
@@ -106,24 +107,24 @@ export default function ApplicationDetailScreen() {
               </View>
             </View>
             {app.appliedDate && (
-              <View style={styles.detailItem}>
-                <View style={styles.detailIcon}>
+              <View style={s.detailItem}>
+                <View style={s.detailIcon}>
                   <Ionicons name="calendar-outline" size={18} color={colors.primary} />
                 </View>
                 <View>
-                  <Text style={styles.detailLabel}>Applied</Text>
-                  <Text style={styles.detailValue}>{new Date(app.appliedDate).toLocaleDateString()}</Text>
+                  <Text style={s.detailLabel}>Applied</Text>
+                  <Text style={s.detailValue}>{new Date(app.appliedDate).toLocaleDateString()}</Text>
                 </View>
               </View>
             )}
             {app.jobURL && (
-              <View style={styles.detailItem}>
-                <View style={styles.detailIcon}>
+              <View style={s.detailItem}>
+                <View style={s.detailIcon}>
                   <Ionicons name="link-outline" size={18} color={colors.accent} />
                 </View>
                 <Pressable onPress={() => Linking.openURL(app.jobURL!)}>
-                  <Text style={styles.detailLabel}>Job URL</Text>
-                  <Text style={[styles.detailValue, styles.link]}>Open link</Text>
+                  <Text style={s.detailLabel}>Job URL</Text>
+                  <Text style={[s.detailValue, s.link]}>Open link</Text>
                 </Pressable>
               </View>
             )}
@@ -134,8 +135,8 @@ export default function ApplicationDetailScreen() {
       {app.notes && (
         <Card>
           <CardContent>
-            <Text style={styles.sectionTitleSmall}>Notes</Text>
-            <Text style={styles.notes}>{app.notes}</Text>
+            <Text style={s.sectionTitleSmall}>Notes</Text>
+            <Text style={s.notes}>{app.notes}</Text>
           </CardContent>
         </Card>
       )}
@@ -171,23 +172,25 @@ export default function ApplicationDetailScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.light.background },
+const getStyles = (c: typeof Colors.light) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: 16, gap: 16, paddingBottom: 40 },
-  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.background, gap: 12, padding: 32 },
-  errorText: { fontSize: Typography.headline.sm, fontWeight: '700', color: Colors.light.error, fontFamily: Fonts.headline },
-  errorHint: { fontSize: Typography.body.sm, color: Colors.light.onSurfaceVariant, textAlign: 'center', fontFamily: Fonts.body, maxWidth: 300 },
+  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: c.background, gap: 12, padding: 32 },
+  errorText: { fontSize: Typography.headline.sm, fontWeight: '700', color: c.error, fontFamily: Fonts.headline },
+  errorHint: { fontSize: Typography.body.sm, color: c.onSurfaceVariant, textAlign: 'center', fontFamily: Fonts.body, maxWidth: 300 },
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   titleSection: { marginBottom: 8, gap: 4 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  company: { fontSize: 32, fontWeight: '800', color: Colors.light.onSurface, fontFamily: Fonts.headline, letterSpacing: -0.5, flex: 1 },
-  jobTitle: { fontSize: Typography.title.lg, fontWeight: '500', color: Colors.light.onSurfaceVariant, fontFamily: Fonts.headline },
+  company: { fontSize: 32, fontWeight: '800', color: c.onSurface, fontFamily: Fonts.headline, letterSpacing: -0.5, flex: 1 },
+  jobTitle: { fontSize: Typography.title.lg, fontWeight: '500', color: c.onSurfaceVariant, fontFamily: Fonts.headline },
   detailGrid: { gap: 16 },
   detailItem: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   detailIcon: { width: 32, alignItems: 'center' },
-  detailLabel: { fontSize: Typography.label.sm, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body },
-  detailValue: { fontSize: Typography.title.md, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline },
-  link: { color: Colors.light.accent, textDecorationLine: 'underline' },
-  sectionTitleSmall: { fontSize: Typography.label.lg, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: Colors.light.onSurface, fontFamily: Fonts.body, marginBottom: 8 },
-  notes: { fontSize: Typography.body.md, color: Colors.light.onSurfaceVariant, lineHeight: 22, fontStyle: 'italic', fontFamily: Fonts.body },
+  detailLabel: { fontSize: Typography.label.sm, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: c.onSurfaceVariant, fontFamily: Fonts.body },
+  detailValue: { fontSize: Typography.title.md, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline },
+  link: { color: c.accent, textDecorationLine: 'underline' },
+  sectionTitleSmall: { fontSize: Typography.label.lg, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, color: c.onSurface, fontFamily: Fonts.body, marginBottom: 8 },
+  notes: { fontSize: Typography.body.md, color: c.onSurfaceVariant, lineHeight: 22, fontStyle: 'italic', fontFamily: Fonts.body },
 })
+
+const styles = getStyles(Colors.light)
