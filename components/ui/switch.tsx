@@ -1,4 +1,5 @@
 import { Switch as RNSwitch, StyleSheet, type ViewStyle } from 'react-native'
+import { useColors } from '@/hooks/useColors'
 import { Colors } from '@/constants/theme'
 
 interface SwitchProps {
@@ -11,6 +12,7 @@ interface SwitchProps {
 }
 
 function Switch({ value = false, onValueChange, disabled, style, accessibilityLabel }: SwitchProps) {
+  const colors = useColors()
   return (
     <RNSwitch
       value={value}
@@ -18,10 +20,10 @@ function Switch({ value = false, onValueChange, disabled, style, accessibilityLa
       disabled={disabled}
       accessibilityLabel={accessibilityLabel}
       trackColor={{
-        false: Colors.light.surfaceContainerHigh,
-        true: Colors.light.primary,
+        false: colors.surfaceContainerHigh,
+        true: colors.primary,
       }}
-      thumbColor={Colors.light.surface}
+      thumbColor={colors.surface}
       style={style}
     />
   )

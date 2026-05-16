@@ -4,99 +4,125 @@ import { Link, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { signIn } from '@/lib/auth-client'
 import { cacheSessionFromLogin } from '@/contexts/AuthContext'
-import { Colors, Typography, Fonts } from '@/constants/theme'
+import { Colors, Typography, Fonts, Shadows } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
+const DECORATIVE_DOTS = [
+  { top: '12%', left: '8%', size: 6, opacity: 0.25 },
+  { top: '20%', right: '12%', size: 4, opacity: 0.15 },
+  { top: '45%', left: '4%', size: 8, opacity: 0.1 },
+  { top: '65%', right: '6%', size: 5, opacity: 0.2 },
+  { top: '82%', left: '16%', size: 3, opacity: 0.18 },
+]
+
 export default function LoginScreen() {
+  const colors = useColors()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  const fadeAnim = useRef(new Animated.Value(0)).current
-  const slideAnim = useRef(new Animated.Value(12)).current
+  const entrance = useRef([...Array(5)].map(() => new Animated.Value(0))).current
+  const pulseAnim = useRef(new Animated.Value(1)).current
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
+    entrance.forEach((anim, i) => {
+      Animated.timing(anim, {
         toValue: 1,
-        duration: 400,
+        duration: 500,
+        delay: i * 100,
         useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start()
+      }).start()
+    })
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 0.5, duration: 2500, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 2500, useNativeDriver: true }),
+      ])
+    ).start()
   }, [])
 
   const handleLogin = async () => {
     setLoading(true)
     setErrorMsg('')
-    const { error, data } = await signIn.email({
-      email,
-      password,
-    })
+    const { error, data } = await signIn.email({ email, password })
     if (error) {
       setErrorMsg(error.message || 'Login failed')
       setLoading(false)
     } else {
       await cacheSessionFromLogin(data)
-      router.replace('/(tabs)' as any)
+      router.replace('/(tabs)' as const)
     }
   }
 
   const handleGoogle = async () => {
-    const { error } = await signIn.social({
-      provider: 'google',
-    })
-    if (!error) {
-      router.replace('/(tabs)' as any)
-    }
+    const { error } = await signIn.social({ provider: 'google' })
+    if (!error) router.replace('/(tabs)' as const)
   }
 
-  const staggeredStyle = (delay: number) => ({
-    opacity: fadeAnim,
-    transform: [{ translateY: slideAnim }],
+  const staggerStyle = (index: number) => ({
+    opacity: entrance[index],
+    transform: [{ translateY: entrance[index].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
   })
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        {DECORATIVE_DOTS.map((dot, i) => (
+          <Animated.View
+            key={i}
+            style={[styles.decorativeDot, {
+              top: dot.top as any,
+              left: (dot as any).left,
+              right: (dot as any).right,
+              width: dot.size,
+              height: dot.size,
+              borderRadius: dot.size / 2,
+              opacity: dot.opacity,
+              transform: [{ scale: Animated.multiply(pulseAnim, 1) }] as any,
+            }]}
+          />
+        ))}
+        <View style={styles.orbitalRing} />
+
+        <Animated.View style={[styles.card, staggerStyle(0)]}>
+          <View style={styles.accentBar} />
+
           <View style={styles.header}>
-            <Ionicons name="rocket-outline" size={48} color={Colors.light.primary} style={styles.logo} />
+            <View style={styles.logoWrap}>
+              <Ionicons name="rocket-outline" size={36} color={colors.accent} />
+            </View>
+            <Text style={styles.badgeText}>ORBIT ACCESS</Text>
             <Text style={styles.title}>Welcome back</Text>
-            <Text style={styles.subtitle}>Please enter your details to sign in.</Text>
+            <Text style={styles.subtitle}>Authenticate to access mission control.</Text>
           </View>
 
-          <Button variant="outline" onPress={handleGoogle}><Ionicons name="logo-google" size={20} /><Text> Login with Google</Text></Button>
+          <Animated.View style={staggerStyle(1)}>
+            <Button variant="outline" onPress={handleGoogle}>
+              <Ionicons name="logo-google" size={18} color={colors.onSurfaceVariant} />
+              <Text style={{ color: colors.onSurface }}>  Sign in with Google</Text>
+            </Button>
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with email</Text>
-            <View style={styles.dividerLine} />
-          </View>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or continue with credentials</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          </Animated.View>
 
           {errorMsg ? (
-            <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle" size={16} color={Colors.light.error} />
+            <Animated.View style={[styles.errorBanner, staggerStyle(2)]}>
+              <Ionicons name="alert-circle" size={16} color={colors.error} />
               <Text style={styles.errorText}>{errorMsg}</Text>
-            </View>
+            </Animated.View>
           ) : null}
 
-          <View style={styles.form}>
+          <Animated.View style={[styles.form, staggerStyle(2)]}>
             <View style={styles.field}>
-              <Text style={styles.label}>Email Address</Text>
+              <Text style={styles.label}>EMAIL ADDRESS</Text>
               <Input
                 value={email}
                 onChangeText={setEmail}
@@ -106,9 +132,8 @@ export default function LoginScreen() {
                 autoCorrect={false}
               />
             </View>
-
             <View style={styles.field}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>PASSWORD</Text>
               <Input
                 value={password}
                 onChangeText={setPassword}
@@ -116,28 +141,25 @@ export default function LoginScreen() {
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 right={
-                  <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={Colors.light.outline} />
+                  <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton} accessibilityRole="button">
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.outline} />
                   </Pressable>
                 }
               />
             </View>
-
             <View style={styles.helpers}>
-              <Link href={'/(auth)/forgot-password' as any} style={styles.forgotLink}>
-                Forgot password?
-              </Link>
+              <Link href={'/(auth)/forgot-password' as any} style={styles.forgotLink}>Reset credentials</Link>
             </View>
+          </Animated.View>
 
-            <Button onPress={handleLogin} loading={loading} size="lg">Sign In</Button>
-          </View>
+          <Animated.View style={staggerStyle(3)}>
+            <Button onPress={handleLogin} loading={loading} size="lg">Authenticate</Button>
+          </Animated.View>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <Link href={'/(auth)/register' as any} style={styles.footerLink}>
-              Create one
-            </Link>
-          </View>
+          <Animated.View style={[styles.footer, staggerStyle(4)]}>
+            <Text style={styles.footerText}>No access credentials? </Text>
+            <Link href={'/(auth)/register' as any} style={styles.footerLink}>Request access</Link>
+          </Animated.View>
         </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -155,22 +177,56 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingVertical: 48,
   },
+  decorativeDot: {
+    position: 'absolute',
+    backgroundColor: Colors.light.accent,
+    zIndex: 0,
+  },
+  orbitalRing: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    borderWidth: 1,
+    borderColor: Colors.light.accent + '12',
+    top: '5%',
+    right: -60,
+  },
   card: {
     backgroundColor: Colors.light.surface,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 32,
-    shadowColor: Colors.light.onSurface,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 8,
+    ...Shadows.xl,
+    overflow: 'hidden',
+  },
+  accentBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: Colors.light.accent,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
   },
-  logo: {
+  logoWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: Colors.light.accentContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
+  },
+  badgeText: {
+    fontSize: Typography.label.sm,
+    fontFamily: Fonts.body,
+    fontWeight: '700',
+    color: Colors.light.accent,
+    letterSpacing: 2,
+    marginBottom: 8,
   },
   title: {
     fontSize: Typography.headline.lg,
@@ -184,11 +240,12 @@ const styles = StyleSheet.create({
     fontSize: Typography.body.sm,
     fontFamily: Fonts.body,
     color: Colors.light.onSurfaceVariant,
+    letterSpacing: 0.3,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginVertical: 20,
   },
   dividerLine: {
     flex: 1,
@@ -200,14 +257,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.body,
     color: Colors.light.onSurfaceVariant,
     marginHorizontal: 16,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-                backgroundColor: Colors.light.errorContainer,
+    backgroundColor: Colors.light.errorContainer,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -226,12 +283,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   label: {
-    fontSize: Typography.body.sm,
+    fontSize: Typography.label.sm,
     fontFamily: Fonts.body,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.light.onSurface,
+    letterSpacing: 0.8,
   },
-
   eyeButton: {
     padding: 12,
   },
@@ -243,7 +300,8 @@ const styles = StyleSheet.create({
     fontSize: Typography.body.sm,
     fontFamily: Fonts.body,
     fontWeight: '600',
-    color: Colors.light.primary,
+    color: Colors.light.accent,
+    letterSpacing: 0.3,
   },
   footer: {
     flexDirection: 'row',
@@ -259,6 +317,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.body.sm,
     fontFamily: Fonts.body,
     fontWeight: '700',
-    color: Colors.light.primary,
+    color: Colors.light.accent,
   },
 })

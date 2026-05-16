@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { View, StyleSheet, type ViewStyle } from 'react-native'
 import Animated, {
   useSharedValue,
@@ -8,6 +8,7 @@ import Animated, {
   Easing,
   interpolate,
 } from 'react-native-reanimated'
+import { useColors } from '@/hooks/useColors'
 import { Colors } from '@/constants/theme'
 
 interface SkeletonProps {
@@ -18,6 +19,8 @@ interface SkeletonProps {
 }
 
 function Skeleton({ width = '100%', height = 16, borderRadius = 8, style }: SkeletonProps) {
+  const colors = useColors()
+  const styles = useMemo(() => getStyles(colors), [colors])
   const shimmer = useSharedValue(0)
 
   useEffect(() => {
@@ -46,6 +49,8 @@ function Skeleton({ width = '100%', height = 16, borderRadius = 8, style }: Skel
 }
 
 function SkeletonCard({ lines = 3, style }: { lines?: number; style?: ViewStyle }) {
+  const colors = useColors()
+  const styles = useMemo(() => getStyles(colors), [colors])
   return (
     <View style={[styles.card, style]}>
       <Skeleton height={16} width="60%" />
@@ -59,6 +64,8 @@ function SkeletonCard({ lines = 3, style }: { lines?: number; style?: ViewStyle 
 }
 
 function KanbanSkeleton() {
+  const colors = useColors()
+  const styles = useMemo(() => getStyles(colors), [colors])
   const statuses = ['SAVED', 'APPLIED', 'PHONE_SCREEN', 'INTERVIEW', 'OFFER', 'CLOSED']
   return (
     <View style={styles.kanbanContainer}>
@@ -79,6 +86,8 @@ function KanbanSkeleton() {
 }
 
 function TableSkeleton({ rows = 5 }: { rows?: number }) {
+  const colors = useColors()
+  const styles = useMemo(() => getStyles(colors), [colors])
   return (
     <View style={styles.tableContainer}>
       <View style={styles.tableHeader}>
@@ -97,49 +106,51 @@ function TableSkeleton({ rows = 5 }: { rows?: number }) {
   )
 }
 
-const styles = StyleSheet.create({
-  skeleton: {
-    backgroundColor: Colors.light.surfaceContainer,
-  },
-  card: {
-    backgroundColor: Colors.light.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.light.outlineVariant,
-    padding: 16,
-    gap: 16,
-  },
-  kanbanContainer: {
-    flexDirection: 'row',
-    gap: 16,
-    padding: 16,
-  },
-  kanbanColumn: {
-    flex: 1,
-    gap: 12,
-  },
-  kanbanCard: {
-    gap: 8,
-  },
-  tableContainer: {
-    gap: 12,
-    padding: 16,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  tableHeaderCell: {
-    flex: 1,
-    height: 32,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  tableCell: {
-    flex: 1,
-  },
-})
+function getStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    skeleton: {
+      backgroundColor: c.surfaceContainer,
+    },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: c.outlineVariant,
+      padding: 16,
+      gap: 16,
+    },
+    kanbanContainer: {
+      flexDirection: 'row',
+      gap: 16,
+      padding: 16,
+    },
+    kanbanColumn: {
+      flex: 1,
+      gap: 12,
+    },
+    kanbanCard: {
+      gap: 8,
+    },
+    tableContainer: {
+      gap: 12,
+      padding: 16,
+    },
+    tableHeader: {
+      flexDirection: 'row',
+      gap: 16,
+    },
+    tableHeaderCell: {
+      flex: 1,
+      height: 32,
+    },
+    tableRow: {
+      flexDirection: 'row',
+      gap: 16,
+    },
+    tableCell: {
+      flex: 1,
+    },
+  })
+}
 
 export { Skeleton, SkeletonCard, KanbanSkeleton, TableSkeleton }

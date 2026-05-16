@@ -4,11 +4,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors, Typography, Fonts } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
 import { Spinner } from '@/components/ui/spinner'
 import { ApplicationForm, type ApplicationFormValues } from '@/components/applications/ApplicationForm'
 import { useApplication, useUpdateApplication, useDeleteApplication } from '@/features/applications/api/useApplications'
 
 export default function EditApplicationScreen() {
+  const colors = useColors()
   const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { data: response, isLoading, isError, error } = useApplication(id!)
@@ -38,7 +40,7 @@ export default function EditApplicationScreen() {
     setIsDeleting(true)
     try {
       await deleteApplication.mutateAsync(id!)
-      router.replace('/(tabs)/applications' as any)
+      router.replace('/(tabs)/applications' as const)
     } catch (error: any) {
       Alert.alert('Error', error?.message || 'Failed to delete application')
     } finally {
@@ -56,9 +58,9 @@ export default function EditApplicationScreen() {
 
   if (isError) {
     return (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.loading}>
-          <Ionicons name="alert-circle-outline" size={48} color={Colors.light.error} />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorText}>Failed to load application</Text>
           <Text style={styles.errorDetail}>{error?.message || 'An unexpected error occurred'}</Text>
         </View>
@@ -71,11 +73,11 @@ export default function EditApplicationScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.light.onSurface} />
+        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button">
+          <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
         </Pressable>
         <Text style={styles.title}>Edit Application</Text>
-        <View style={{ width: 24 }} />
+        <View style={styles.backBtn} />
       </View>
       <ApplicationForm
         initialData={response.data}
@@ -90,9 +92,15 @@ export default function EditApplicationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.light.background },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.background },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
-  title: { fontSize: Typography.headline.sm, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline },
-  errorText: { fontSize: Typography.title.lg, fontWeight: '600', color: Colors.light.error, marginTop: 16, fontFamily: Fonts.headline },
-  errorDetail: { fontSize: Typography.body.sm, color: Colors.light.onSurfaceVariant, marginTop: 8, textAlign: 'center', fontFamily: Fonts.body },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.background, gap: 12 },
+  topBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: Colors.light.outlineVariant,
+    backgroundColor: Colors.light.surface,
+  },
+  backBtn: { width: 40, alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: Typography.headline.sm, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline, flex: 1, textAlign: 'center' },
+  errorText: { fontSize: Typography.title.lg, fontWeight: '600', color: Colors.light.error, fontFamily: Fonts.headline },
+  errorDetail: { fontSize: Typography.body.sm, color: Colors.light.onSurfaceVariant, textAlign: 'center', fontFamily: Fonts.body },
 })

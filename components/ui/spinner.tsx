@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import { ActivityIndicator, View, Text, StyleSheet } from 'react-native'
+import { useColors } from '@/hooks/useColors'
 import { Colors, Typography } from '@/constants/theme'
 
 interface SpinnerProps {
@@ -6,14 +8,18 @@ interface SpinnerProps {
   color?: 'primary' | 'secondary' | 'white' | 'muted'
 }
 
-const colorMap: Record<string, string> = {
-  primary: Colors.light.primary,
-  secondary: Colors.light.secondary,
-  white: Colors.light.onPrimary,
-  muted: Colors.light.mutedForeground,
+function getColorMap(c: typeof Colors.light): Record<string, string> {
+  return {
+    primary: c.primary,
+    secondary: c.secondary,
+    white: c.onPrimary,
+    muted: c.mutedForeground,
+  }
 }
 
 function Spinner({ size = 'small', color = 'primary' }: SpinnerProps) {
+  const colors = useColors()
+  const colorMap = useMemo(() => getColorMap(colors), [colors])
   return (
     <ActivityIndicator
       size={size}
@@ -23,6 +29,8 @@ function Spinner({ size = 'small', color = 'primary' }: SpinnerProps) {
 }
 
 function LoadingScreen({ message = 'Loading...' }: { message?: string }) {
+  const colors = useColors()
+  const styles = useMemo(() => getStyles(colors), [colors])
   return (
     <View style={styles.loadingScreen}>
       <Spinner size="large" />
@@ -31,18 +39,20 @@ function LoadingScreen({ message = 'Loading...' }: { message?: string }) {
   )
 }
 
-const styles = StyleSheet.create({
-  loadingScreen: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-    padding: 32,
-  },
-  message: {
-    fontSize: Typography.body.sm,
-    color: Colors.light.mutedForeground,
-  },
-})
+function getStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    loadingScreen: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 16,
+      padding: 32,
+    },
+    message: {
+      fontSize: Typography.body.sm,
+      color: c.mutedForeground,
+    },
+  })
+}
 
 export { Spinner, LoadingScreen }

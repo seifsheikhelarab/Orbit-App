@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import { Text, StyleSheet, type TextStyle } from 'react-native'
+import { useColors } from '@/hooks/useColors'
 import { Colors, Typography } from '@/constants/theme'
 
 interface LabelProps {
@@ -8,6 +10,8 @@ interface LabelProps {
 }
 
 function Label({ children, required, style }: LabelProps) {
+  const colors = useColors()
+  const styles = useMemo(() => getStyles(colors), [colors])
   return (
     <Text style={[styles.label, style]}>
       {children}
@@ -16,15 +20,17 @@ function Label({ children, required, style }: LabelProps) {
   )
 }
 
-const styles = StyleSheet.create({
-  label: {
-    fontSize: Typography.label.lg,
-    fontWeight: '600',
-    color: Colors.light.onSurface,
-  },
-  required: {
-    color: Colors.light.primary,
-  },
-})
+function getStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    label: {
+      fontSize: Typography.label.lg,
+      fontWeight: '600',
+      color: c.onSurface,
+    },
+    required: {
+      color: c.primary,
+    },
+  })
+}
 
 export { Label }

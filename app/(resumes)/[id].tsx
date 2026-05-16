@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Print from 'expo-print'
 import * as Sharing from 'expo-sharing'
 import { Colors, Typography, Fonts } from '@/constants/theme'
+import { hexa } from '@/lib/opacity'
+import { useColors } from '@/hooks/useColors'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -53,6 +55,7 @@ function EntryPanel({
   defaultOpen?: boolean
   children: React.ReactNode
 }) {
+  const colors = useColors()
   const [open, setOpen] = useState(defaultOpen ?? false)
 
   return (
@@ -60,6 +63,7 @@ function EntryPanel({
       <Pressable
         onPress={() => setOpen(!open)}
         style={[entryStyles.header, open && entryStyles.headerOpen]}
+        accessibilityRole="button"
       >
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text
@@ -77,7 +81,7 @@ function EntryPanel({
         <Ionicons
           name={open ? 'chevron-up' : 'chevron-down'}
           size={16}
-          color={open ? Colors.light.primary : Colors.light.onSurfaceVariant + '50'}
+          color={open ? colors.primary : hexa(colors.onSurfaceVariant, 0.31)}
         />
       </Pressable>
       {open && <View style={entryStyles.content}>{children}</View>}
@@ -100,7 +104,7 @@ const entryStyles = StyleSheet.create({
   },
   headerOpen: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.outline + '50',
+    borderBottomColor: hexa(Colors.light.outline, 0.31),
   },
   title: {
     fontSize: Typography.body.md,
@@ -120,7 +124,7 @@ const entryStyles = StyleSheet.create({
   content: {
     padding: 16,
     gap: 14,
-    backgroundColor: Colors.light.surfaceContainerLow + '30',
+    backgroundColor: hexa(Colors.light.surfaceContainerLow, 0.19),
   },
   flex1: { flex: 1 },
   rowGap12: { flexDirection: 'row', gap: 12 },
@@ -153,6 +157,7 @@ const entryStyles = StyleSheet.create({
 })
 
 export default function BuilderScreen() {
+  const colors = useColors()
   const { id } = useLocalSearchParams<{ id: string }>()
   const { data: response, isLoading, isError } = useResume(id ?? '')
   const updateResume = useUpdateResume()
@@ -303,7 +308,7 @@ export default function BuilderScreen() {
   if (isError || !document) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={{ color: Colors.light.error }}>Failed to load document.</Text>
+        <Text style={{ color: colors.error }}>Failed to load document.</Text>
       </View>
     )
   }
@@ -491,7 +496,7 @@ export default function BuilderScreen() {
               setResumeData({ ...resumeData, work })
             }}
           >
-            <Ionicons name="trash-outline" size={14} color={Colors.light.onError} />
+            <Ionicons name="trash-outline" size={14} color={colors.onError} />
             <Text style={entryStyles.errorChip}>
               Remove role
             </Text>
@@ -516,7 +521,7 @@ export default function BuilderScreen() {
           })
         }
       >
-        <Ionicons name="add" size={14} color={Colors.light.onSecondaryContainer} />
+        <Ionicons name="add" size={14} color={colors.onSecondaryContainer} />
         <Text
           style={entryStyles.secondaryChip}
         >
@@ -628,7 +633,7 @@ export default function BuilderScreen() {
               setResumeData({ ...resumeData, education: ed })
             }}
           >
-            <Ionicons name="trash-outline" size={14} color={Colors.light.onError} />
+            <Ionicons name="trash-outline" size={14} color={colors.onError} />
             <Text style={entryStyles.errorChip}>
               Remove education
             </Text>
@@ -654,7 +659,7 @@ export default function BuilderScreen() {
           })
         }
       >
-        <Ionicons name="add" size={14} color={Colors.light.onSecondaryContainer} />
+           <Ionicons name="add" size={14} color={colors.onSecondaryContainer} />
         <Text
           style={entryStyles.secondaryChip}
         >
@@ -674,17 +679,18 @@ export default function BuilderScreen() {
             {resumeData.skills.map((skill, i) => (
               <View key={i} style={skillStyles.chip}>
                 <Text style={skillStyles.chipText}>{skill.name}</Text>
-                <Pressable
-                  onPress={() => {
-                    const s = resumeData.skills.filter((_, idx) => idx !== i)
-                    setResumeData({ ...resumeData, skills: s })
-                  }}
-                  hitSlop={8}
-                >
+      <Pressable
+        onPress={() => {
+          const s = resumeData.skills.filter((_, idx) => idx !== i)
+          setResumeData({ ...resumeData, skills: s })
+        }}
+        hitSlop={8}
+        accessibilityRole="button"
+      >
                   <Ionicons
                     name="close-circle"
                     size={16}
-                    color={Colors.light.onSurfaceVariant}
+                    color={colors.onSurfaceVariant}
                   />
                 </Pressable>
               </View>
@@ -795,7 +801,7 @@ export default function BuilderScreen() {
               setResumeData({ ...resumeData, projects: p })
             }}
           >
-            <Ionicons name="trash-outline" size={14} color={Colors.light.onError} />
+            <Ionicons name="trash-outline" size={14} color={colors.onError} />
             <Text style={entryStyles.errorChip}>
               Remove project
             </Text>
@@ -821,7 +827,7 @@ export default function BuilderScreen() {
           })
         }
       >
-        <Ionicons name="add" size={14} color={Colors.light.onSecondaryContainer} />
+           <Ionicons name="add" size={14} color={colors.onSecondaryContainer} />
         <Text
           style={entryStyles.secondaryChip}
         >
@@ -902,7 +908,7 @@ export default function BuilderScreen() {
               setResumeData({ ...resumeData, certifications: c })
             }}
           >
-            <Ionicons name="trash-outline" size={14} color={Colors.light.onError} />
+            <Ionicons name="trash-outline" size={14} color={colors.onError} />
             <Text style={entryStyles.errorChip}>
               Remove certification
             </Text>
@@ -928,7 +934,7 @@ export default function BuilderScreen() {
           })
         }
       >
-        <Ionicons name="add" size={14} color={Colors.light.onSecondaryContainer} />
+        <Ionicons name="add" size={14} color={colors.onSecondaryContainer} />
         <Text
           style={entryStyles.secondaryChip}
         >
@@ -1029,7 +1035,7 @@ export default function BuilderScreen() {
               setResumeData({ ...resumeData, volunteer: vl })
             }}
           >
-            <Ionicons name="trash-outline" size={14} color={Colors.light.onError} />
+            <Ionicons name="trash-outline" size={14} color={colors.onError} />
             <Text style={entryStyles.errorChip}>
               Remove
             </Text>
@@ -1054,7 +1060,7 @@ export default function BuilderScreen() {
           })
         }
       >
-        <Ionicons name="add" size={14} color={Colors.light.onSecondaryContainer} />
+        <Ionicons name="add" size={14} color={colors.onSecondaryContainer} />
         <Text
           style={entryStyles.secondaryChip}
         >
@@ -1127,7 +1133,7 @@ export default function BuilderScreen() {
               setResumeData({ ...resumeData, languages: l })
             }}
           >
-            <Ionicons name="trash-outline" size={14} color={Colors.light.onError} />
+            <Ionicons name="trash-outline" size={14} color={colors.onError} />
             <Text style={entryStyles.errorChip}>
               Remove language
             </Text>
@@ -1146,7 +1152,7 @@ export default function BuilderScreen() {
           })
         }
       >
-        <Ionicons name="add" size={14} color={Colors.light.onSecondaryContainer} />
+        <Ionicons name="add" size={14} color={colors.onSecondaryContainer} />
         <Text
           style={entryStyles.secondaryChip}
         >
@@ -1182,7 +1188,7 @@ export default function BuilderScreen() {
               fontWeight: '700',
               textTransform: 'uppercase',
               letterSpacing: 1,
-              color: Colors.light.primary + '99',
+              color: hexa(colors.primary, 0.60),
               fontFamily: Fonts.body,
             }}
           >
@@ -1195,6 +1201,7 @@ export default function BuilderScreen() {
                 onPress={() =>
                   setSettings((prev) => ({ ...prev, color }))
                 }
+                accessibilityRole="button"
                 style={[
                   entryStyles.colorSwatch,
                   { backgroundColor: color },
@@ -1400,8 +1407,9 @@ export default function BuilderScreen() {
         <Pressable
           onPress={() => router.back()}
           style={styles.backButton}
+          accessibilityRole="button"
         >
-          <Ionicons name="arrow-back" size={22} color={Colors.light.onSurface} />
+          <Ionicons name="arrow-back" size={22} color={colors.onSurface} />
         </Pressable>
         <View style={entryStyles.flex1}>
           <Input
@@ -1421,17 +1429,17 @@ export default function BuilderScreen() {
           disabled={isExporting}
         >
           {isExporting ? (
-            <ActivityIndicator size="small" color={Colors.light.onPrimary} />
+            <ActivityIndicator size="small" color={colors.onPrimary} />
           ) : (
             <Ionicons
               name="download-outline"
               size={16}
-              color={Colors.light.onPrimary}
+              color={colors.onPrimary}
             />
           )}
           <Text
             style={{
-              color: Colors.light.onPrimary,
+              color: colors.onPrimary,
               fontWeight: '600',
               fontSize: Typography.label.md,
               marginLeft: 4,
@@ -1499,7 +1507,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.outline,
-    backgroundColor: Colors.light.surface + 'CC',
+    backgroundColor: hexa(Colors.light.surface, 0.80),
   },
   backButton: {
     padding: 4,

@@ -1,9 +1,14 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl, ActivityIndicator, Animated } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl, Animated } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors, Typography, Fonts } from '@/constants/theme'
+import { Colors, Typography, Fonts, Shadows } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { Card, CardContent } from '@/components/ui/card'
 import { useAnalyticsSummary, useApplicationsOverTime, usePipelineFunnel, useRecentActivity } from '@/features/dashboard/api/useAnalytics'
+import { FeatureTip } from '@/components/onboarding/FeatureTip'
+import { useFeatureTip } from '@/hooks/useOnboarding'
 import { useAnimatedCounter, formatCounter } from '@/hooks/useAnimatedCounter'
 import { STATUS_DASHBOARD_COLORS, type ApplicationStatus } from '@/lib/status'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -12,61 +17,45 @@ import { CartesianChart, Bar } from 'victory-native'
 type Period = '7d' | '30d' | '90d'
 
 const periods: { key: Period; label: string }[] = [
-  { key: '7d', label: '7 days' },
-  { key: '30d', label: '30 days' },
-  { key: '90d', label: '90 days' },
+  { key: '7d', label: '7D' },
+  { key: '30d', label: '30D' },
+  { key: '90d', label: '90D' },
 ]
 
-function StatCard({
-  title,
-  value,
-  valueStr,
-  trend,
-  direction,
-  icon,
-  accent,
-}: {
-  title: string
-  value: number
-  valueStr: string
-  trend?: number
-  direction?: 'up' | 'down' | 'neutral'
-  icon: keyof typeof Ionicons.glyphMap
-  accent: string
+function HeroStat({ value, label, trend, direction, icon }: {
+  value: number; label: string; trend?: number; direction?: 'up' | 'down'; icon: keyof typeof Ionicons.glyphMap
 }) {
-  const animatedValue = useAnimatedCounter(value, { duration: 1000, decimals: direction !== undefined ? 1 : 0 })
-
+  const colors = useColors()
+  const animated = useAnimatedCounter(value, { duration: 1200 })
   return (
-    <View style={[styles.statCard, { borderLeftColor: accent }]}>
-      <View style={styles.statHeader}>
-        <View style={[styles.statIconWrap, { backgroundColor: accent + '15' }]}>
-          <Ionicons name={icon} size={16} color={accent} />
+    <View style={styles.heroCard}>
+      <View style={styles.heroTop}>
+        <View style={styles.heroLabelRow}>
+          <View style={styles.heroIconWrap}>
+            <Ionicons name={icon} size={22} color={colors.accent} />
+          </View>
+          <Text style={styles.heroLabel}>{label}</Text>
         </View>
-        {trend !== undefined && direction && direction !== 'neutral' && (
-          <View style={[styles.trendBadge, { backgroundColor: direction === 'up' ? Colors.light.successContainer : Colors.light.errorContainer }]}>
-            <Ionicons name={direction === 'up' ? 'arrow-up' : 'arrow-down'} size={10} color={direction === 'up' ? Colors.light.success : Colors.light.error} />
-            <Text style={[styles.trendText, { color: direction === 'up' ? Colors.light.success : Colors.light.error }]}>
-              {trend}%
-            </Text>
+        {trend !== undefined && direction && (
+          <View style={[styles.heroTrend, { backgroundColor: direction === 'up' ? colors.successContainer : colors.errorContainer }]}>
+            <Ionicons name={direction === 'up' ? 'arrow-up' : 'arrow-down'} size={12} color={direction === 'up' ? colors.success : colors.error} />
+            <Text style={[styles.heroTrendText, { color: direction === 'up' ? colors.success : colors.error }]}>{trend}%</Text>
           </View>
         )}
       </View>
-      <Text style={styles.statTitle}>{title}</Text>
-      <Text style={styles.statValue}>{direction !== undefined ? formatCounter(animatedValue, { decimals: 1, suffix: '%' }) : formatCounter(animatedValue)}</Text>
+      <Text style={styles.heroValue}>{formatCounter(animated)}</Text>
     </View>
   )
 }
 
-function PeriodPill({ period, active, onPress }: { period: Period; active: boolean; onPress: () => void }) {
+function CompactStat({ value, label, accent }: { value: number; label: string; accent: string }) {
+  const colors = useColors()
+  const animated = useAnimatedCounter(value, { duration: 1000, decimals: 1 })
   return (
-    <Pressable
-      style={[styles.periodPill, active && styles.periodPillActive]}
-      onPress={onPress}
-    >
-      <Text style={[styles.periodPillText, active && styles.periodPillTextActive]}>
-        {periods.find(p => p.key === period)?.label}
-      </Text>
-    </Pressable>
+    <View style={[styles.compactCard, { borderLeftColor: accent }]}>
+      <Text style={styles.compactValue}>{formatCounter(animated, { decimals: 1, suffix: '%' })}</Text>
+      <Text style={styles.compactLabel}>{label}</Text>
+    </View>
   )
 }
 
@@ -86,12 +75,18 @@ function statusLabel(s: string) {
 const funnelOrder = ['APPLIED', 'PHONE_SCREEN', 'INTERVIEW', 'OFFER'] as const
 
 function FunnelRow({ item, maxFunnel }: { item: { status: string; count: number; color: string }; maxFunnel: number }) {
+  const colors = useColors()
   const widthPercent = (item.count / maxFunnel) * 100
   return (
     <View style={styles.funnelRow}>
-      <Text style={styles.funnelLabel}>{item.status}</Text>
+      <View style={styles.funnelLabelWrap}>
+        <View style={[styles.funnelDot, { backgroundColor: item.color }]} />
+        <Text style={styles.funnelLabel}>{item.status}</Text>
+      </View>
       <View style={styles.funnelBarTrack}>
-        <View style={[styles.funnelBar, { width: `${Math.max(widthPercent, 4)}%`, backgroundColor: item.color }]} />
+        <View style={[styles.funnelBar, { width: `${Math.max(widthPercent, 4)}%`, backgroundColor: item.color }]}>
+          <Text style={styles.funnelBarText}>{Math.round(widthPercent)}%</Text>
+        </View>
       </View>
       <Text style={styles.funnelCount}>{item.count}</Text>
     </View>
@@ -99,13 +94,12 @@ function FunnelRow({ item, maxFunnel }: { item: { status: string; count: number;
 }
 
 const ActivityItem = React.memo(function ActivityItem({ item, showBorder }: { item: any; showBorder: boolean }) {
+  const colors = useColors()
   return (
     <View style={[styles.activityItem, showBorder && styles.activityItemBorder]}>
-      <View style={[styles.activityDot, { backgroundColor: STATUS_DASHBOARD_COLORS[item.toStatus as ApplicationStatus] ?? Colors.light.outline }]} />
+      <View style={[styles.activityDot, { backgroundColor: STATUS_DASHBOARD_COLORS[item.toStatus as ApplicationStatus] ?? colors.accent }]} />
       <View style={styles.activityContent}>
-        <Text style={styles.activityTitle} numberOfLines={1}>
-          {item.company}
-        </Text>
+        <Text style={styles.activityTitle} numberOfLines={1}>{item.company}</Text>
         <Text style={styles.activitySubtitle} numberOfLines={1}>
           {item.fromStatus ? `${statusLabel(item.fromStatus)} → ${statusLabel(item.toStatus)}` : statusLabel(item.toStatus)}
         </Text>
@@ -115,10 +109,32 @@ const ActivityItem = React.memo(function ActivityItem({ item, showBorder }: { it
   )
 })
 
+function CollapsibleSection({ title, icon, defaultOpen, children }: {
+  title: string; icon: keyof typeof Ionicons.glyphMap; defaultOpen?: boolean; children: React.ReactNode
+}) {
+  const colors = useColors()
+  const [open, setOpen] = useState(defaultOpen ?? false)
+  return (
+    <View>
+      <Pressable onPress={() => setOpen(!open)} style={styles.sectionHeader} accessibilityRole="button">
+        <View style={styles.sectionHeaderLeft}>
+          <View style={[styles.sectionAccent, { backgroundColor: colors.accent }]} />
+          <Ionicons name={icon} size={16} color={colors.accent} />
+          <Text style={styles.sectionTitle}>{title}</Text>
+        </View>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={colors.onSurfaceVariant} />
+      </Pressable>
+      {open && <View style={{ marginTop: 12 }}>{children}</View>}
+    </View>
+  )
+}
+
 export default function DashboardScreen() {
+  const colors = useColors()
   const insets = useSafeAreaInsets()
   const [period, setPeriod] = useState<Period>('30d')
   const [refreshing, setRefreshing] = useState(false)
+  const dashTip = useFeatureTip('dashboard')
 
   const summary = useAnalyticsSummary(period)
   const overTime = useApplicationsOverTime(period)
@@ -127,18 +143,11 @@ export default function DashboardScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
-    await Promise.all([
-      summary.refetch(),
-      overTime.refetch(),
-      pipeline.refetch(),
-      activity.refetch(),
-    ])
+    await Promise.all([summary.refetch(), overTime.refetch(), pipeline.refetch(), activity.refetch()])
     setRefreshing(false)
   }, [])
 
-  const handlePeriodChange = useCallback((key: Period) => {
-    setPeriod(key)
-  }, [])
+  const handlePeriodChange = useCallback((key: Period) => setPeriod(key), [])
 
   const s = summary.data
   const funnelData = useMemo(() =>
@@ -151,40 +160,25 @@ export default function DashboardScreen() {
       .filter(d => d.count > 0),
     [pipeline.data]
   )
-
   const maxFunnel = useMemo(() => Math.max(...funnelData.map(d => d.count), 1), [funnelData])
 
   const chartData = useMemo(() =>
-    (overTime.data ?? []).map((d: any) => ({
-      period: d.period?.slice(5) ?? '',
-      count: d.count,
-    })) as any[],
+    (overTime.data ?? []).map((d: any) => ({ period: d.period?.slice(5) ?? '', count: d.count })) as any[],
     [overTime.data]
   )
 
-  const entrance = useRef([0, 1, 2, 3].map(() => new Animated.Value(0))).current
-
+  const entrance = useRef([...Array(5)].map(() => new Animated.Value(0))).current
   useEffect(() => {
     entrance.forEach((anim, i) => {
       anim.setValue(0)
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 500 + i * 60,
-        delay: i * 120,
-        useNativeDriver: true,
-      }).start()
+      Animated.spring(anim, { toValue: 1, friction: 8, tension: 60, delay: i * 100, useNativeDriver: true }).start()
     })
-  }, [])
+  }, [entrance])
 
   function sectionStyle(index: number) {
     return {
       opacity: entrance[index],
-      transform: [{
-        translateY: entrance[index].interpolate({
-          inputRange: [0, 1],
-          outputRange: [20 - index * 4, 0],
-        }),
-      }],
+      transform: [{ translateY: entrance[index].interpolate({ inputRange: [0, 1], outputRange: [16 - index * 3, 0] }) }],
     }
   }
 
@@ -193,404 +187,248 @@ export default function DashboardScreen() {
 
   if (isLoading) {
     return (
-      <ScrollView
-        style={[styles.container, { paddingTop: insets.top + 16 }]}
-        contentContainerStyle={styles.content}
+      <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <View style={styles.header}>
-          <Text style={styles.pageTitle}>Dashboard</Text>
+        <PageHeader icon="grid-outline" iconVariant="accent" title="Mission Dashboard" subtitle="30d outlook" />
+        <View style={{ height: 160, borderRadius: 24, backgroundColor: colors.surfaceContainer, marginBottom: 12 }} />
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ flex: 1, height: 100, borderRadius: 20, backgroundColor: colors.surfaceContainer }} />
+          <View style={{ flex: 1, height: 100, borderRadius: 20, backgroundColor: colors.surfaceContainer }} />
         </View>
-        <View style={styles.statsGrid}>
-          {[1, 2, 3, 4].map((i) => (
-            <View key={i} style={[styles.statCard, { borderLeftColor: Colors.light.outlineVariant, gap: 10 }]}>
-              <View style={[styles.statIconWrap, { backgroundColor: Colors.light.surfaceContainer, width: 32, height: 32, borderRadius: 10 }]} />
-              <View style={{ height: 12, width: '60%', borderRadius: 4, backgroundColor: Colors.light.surfaceContainer }} />
-              <View style={{ height: 28, width: '40%', borderRadius: 6, backgroundColor: Colors.light.surfaceContainer }} />
-            </View>
-          ))}
-        </View>
-        <View style={[styles.chartCard, { height: 160, gap: 12 }]}>
-          <View style={{ height: 16, width: '50%', borderRadius: 4, backgroundColor: Colors.light.surfaceContainer }} />
-          <View style={{ flex: 1, borderRadius: 8, backgroundColor: Colors.light.surfaceContainer }} />
-        </View>
-        <View style={[styles.chartCard, { height: 200, gap: 12 }]}>
-          <View style={{ height: 16, width: '40%', borderRadius: 4, backgroundColor: Colors.light.surfaceContainer }} />
-          {[1, 2, 3, 4].map((i) => (
-            <View key={i} style={{ height: 12, width: `${80 - i * 15}%`, borderRadius: 4, backgroundColor: Colors.light.surfaceContainer }} />
-          ))}
-        </View>
-      </ScrollView>
-    )
-  }
-
-  if (isEmpty) {
-    return (
-      <ScrollView contentContainerStyle={styles.emptyContainer} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <EmptyState
-          icon="applications"
-          title="No data yet"
-          description="Start adding job applications to see your dashboard come to life."
-        />
       </ScrollView>
     )
   }
 
   return (
-    <ScrollView
-      style={[styles.container, { paddingTop: insets.top + 16 }]}
-      contentContainerStyle={styles.content}
+    <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <View style={styles.header}>
-        <Text style={styles.pageTitle}>Dashboard</Text>
-      </View>
-
-      <Animated.View style={sectionStyle(0)}>
-      <View style={styles.periodRow}>
+      <PageHeader
+        icon="grid-outline"
+        iconVariant="accent"
+        title="Mission Dashboard"
+        subtitle={`${period} outlook`}
+      />
+      <View style={styles.periodPillRow}>
         {periods.map(p => (
-          <PeriodPill key={p.key} period={p.key} active={period === p.key} onPress={() => handlePeriodChange(p.key)} />
+          <Pressable
+            key={p.key}
+            style={[styles.periodPill, period === p.key && styles.periodPillActive]}
+            onPress={() => handlePeriodChange(p.key)}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.periodPillText, period === p.key && styles.periodPillTextActive]}>
+              {p.label}
+            </Text>
+          </Pressable>
         ))}
       </View>
 
-      <View style={styles.statsGrid}>
-        <StatCard
-          title="Total Applied"
-          value={s?.totalApplications ?? 0}
-          valueStr={String(s?.totalApplications ?? 0)}
-          trend={s?.totalApplicationsTrend}
-          direction={s?.totalApplicationsTrendDirection}
-          icon="send"
-          accent={Colors.light.primary}
-        />
-        <StatCard
-          title="Active Pipeline"
-          value={s?.activePipeline ?? 0}
-          valueStr={String(s?.activePipeline ?? 0)}
-          trend={s?.activeTrend}
-          direction={s?.activeTrendDirection}
-          icon="funnel"
-          accent={Colors.light.accent}
-        />
-        <StatCard
-          title="Response Rate"
-          value={s?.responseRate ?? 0}
-          valueStr={`${s?.responseRate ?? 0}%`}
-          trend={s?.responseRateTrend}
-          direction={s?.responseRateTrendDirection}
-          icon="chatbubble-ellipses"
-          accent={Colors.light.statusPhoneScreen}
-        />
-        <StatCard
-          title="Offer Rate"
-          value={s?.offerRate ?? 0}
-          valueStr={`${s?.offerRate ?? 0}%`}
-          trend={s?.offerRateTrend}
-          direction={s?.offerRateTrendDirection}
-          icon="trophy"
-          accent={Colors.light.statusOffer}
-        />
-      </View>
-      </Animated.View>
-
-      <Animated.View style={sectionStyle(1)}>
-      {funnelData.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pipeline Funnel</Text>
-          <View style={styles.chartCard}>
-            <View style={styles.funnelContainer}>
-              {funnelData.map((item) => (
-                <FunnelRow key={item.status} item={item} maxFunnel={maxFunnel} />
-              ))}
-            </View>
-          </View>
-        </View>
-      )}
-      </Animated.View>
-
-      <Animated.View style={sectionStyle(2)}>
-      {chartData.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Applications Over Time</Text>
-          <View style={styles.chartCard}>
-            <View style={{ height: 220 }}>
-              {/* @ts-ignore - victory-native v41 CartesianChart generics */}
-              <CartesianChart
-                data={chartData}
-                xKey="period"
-                yKeys={["count"]}
-                xAxis={{
-                  labelColor: Colors.light.onSurfaceVariant,
-                  lineColor: Colors.light.outlineVariant,
-                  tickCount: Math.min(chartData.length, 6),
-                }}
-                yAxis={[{
-                  labelColor: Colors.light.onSurfaceVariant,
-                  lineColor: Colors.light.outlineVariant,
-                  tickCount: 5,
-                }]}
-                frame={{ lineColor: Colors.light.outlineVariant, lineWidth: 1 }}
-                domainPadding={{ left: 20, right: 20 }}
-              >
-                {({ points, chartBounds }: any) => (
-                  <Bar 
-                    points={points.count} 
-                    chartBounds={chartBounds}
-                    color={Colors.light.accent}
-                    roundedCorners={{ topLeft: 4, topRight: 4 }}
-                    animate={{ type: "timing", duration: 300 }}
-                  />
-                )}
-              </CartesianChart>
-            </View>
-          </View>
-        </View>
-      )}
-      </Animated.View>
-
-      <Animated.View style={sectionStyle(3)}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
-        <View style={styles.activityCard}>
-          {(!activity.data || activity.data.length === 0) ? (
-            <View style={styles.activityEmpty}>
-              <Ionicons name="time-outline" size={24} color={Colors.light.onSurfaceVariant} />
-              <Text style={styles.activityEmptyText}>No recent activity</Text>
-            </View>
-          ) : (
-            activity.data.map((item: any, idx: number) => (
-              <ActivityItem key={item.id} item={item} showBorder={idx < activity.data.length - 1} />
-            ))
+      {isEmpty ? (
+        <EmptyState icon="applications" title="No data yet" description="Start adding job applications to see your dashboard come to life." />
+      ) : (
+        <>
+          {dashTip.visible && (
+            <FeatureTip visible={dashTip.visible} onDismiss={dashTip.dismiss} icon="speedometer-outline"
+              title="Your mission dashboard" description="Pipeline stats, funnel, and activity — your job search at a glance." />
           )}
-        </View>
-      </View>
-      </Animated.View>
+
+          <Animated.View style={sectionStyle(0)}>
+            <HeroStat
+              value={s?.activePipeline ?? 0}
+              label="ACTIVE PIPELINE"
+              trend={s?.activeTrend} direction={s?.activeTrendDirection as any}
+              icon="funnel"
+            />
+          </Animated.View>
+
+          <Animated.View style={[styles.statsRow, sectionStyle(1)]}>
+            <CompactStat value={s?.responseRate ?? 0} label="RESPONSE RATE" accent={colors.statusPhoneScreen} />
+            <CompactStat value={s?.offerRate ?? 0} label="OFFER RATE" accent={colors.statusOffer} />
+            <View style={styles.miniStat}>
+              <Text style={styles.miniStatValue}>{s?.totalApplications ?? 0}</Text>
+              <Text style={styles.miniStatLabel}>APPLIED</Text>
+            </View>
+          </Animated.View>
+
+          <Animated.View style={sectionStyle(2)}>
+            <CollapsibleSection title="Pipeline Flow" icon="git-branch-outline" defaultOpen>
+              <Card>
+                <CardContent>
+                  {funnelData.length > 0 ? (
+                    funnelData.map((item) => (
+                      <FunnelRow key={item.status} item={item} maxFunnel={maxFunnel} />
+                    ))
+                  ) : (
+                    <Text style={styles.emptySmall}>No pipeline data for this period</Text>
+                  )}
+                </CardContent>
+              </Card>
+            </CollapsibleSection>
+          </Animated.View>
+
+          <Animated.View style={sectionStyle(3)}>
+            <CollapsibleSection title="Trend" icon="trending-up-outline">
+              {chartData.length > 0 ? (
+                <Card>
+                  <CardContent>
+                    <View style={{ height: 200 }}>
+                      <CartesianChart data={chartData} xKey="period" yKeys={["count"]}
+                        xAxis={{ labelColor: colors.onSurfaceVariant, lineColor: colors.outlineVariant, tickCount: Math.min(chartData.length, 6) }}
+                        yAxis={[{ labelColor: colors.onSurfaceVariant, lineColor: colors.outlineVariant, tickCount: 5 }]}
+                        frame={{ lineColor: colors.outlineVariant, lineWidth: 1 }}
+                        domainPadding={{ left: 20, right: 20 }}
+                      >
+                        {({ points, chartBounds }: any) => (
+                          <Bar points={points.count} chartBounds={chartBounds} color={colors.accent}
+                            roundedCorners={{ topLeft: 4, topRight: 4 }} animate={{ type: "timing", duration: 300 }} />
+                        )}
+                      </CartesianChart>
+                    </View>
+                  </CardContent>
+                </Card>
+              ) : null}
+            </CollapsibleSection>
+          </Animated.View>
+
+          <Animated.View style={sectionStyle(4)}>
+            <CollapsibleSection title="Recent Activity" icon="time-outline">
+              <Card>
+                <CardContent>
+                  {(!activity.data || activity.data.length === 0) ? (
+                    <View style={styles.activityEmpty}>
+                      <Ionicons name="time-outline" size={24} color={colors.onSurfaceVariant} />
+                      <Text style={styles.activityEmptyText}>No recent activity</Text>
+                    </View>
+                  ) : (
+                    activity.data.map((item: any, idx: number) => (
+                      <ActivityItem key={item.id} item={item} showBorder={idx < activity.data.length - 1} />
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </CollapsibleSection>
+          </Animated.View>
+        </>
+      )}
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  content: {
-    padding: 16,
-    paddingTop: 8,
-    gap: 20,
-    paddingBottom: 32,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.light.background,
-  },
-  emptyContainer: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-    justifyContent: 'center',
-  },
-  header: {
-    paddingTop: 8,
-    marginBottom: 4,
-  },
-  pageTitle: {
-    fontSize: Typography.headline.lg,
-    fontWeight: '800',
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.headline,
-  },
-  periodRow: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
+  container: { flex: 1, backgroundColor: Colors.light.background },
+  content: { padding: 16, paddingTop: 8, gap: 16, paddingBottom: 32 },
+  emptyContainer: { flex: 1, backgroundColor: Colors.light.background, justifyContent: 'center' },
+  emptySmall: { fontSize: Typography.body.sm, color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body, textAlign: 'center', padding: 16 },
+
+  periodPillRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   periodPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 100,
     backgroundColor: Colors.light.surfaceContainer,
+    borderWidth: 1, borderColor: Colors.light.outlineVariant,
   },
-  periodPillActive: {
-    backgroundColor: Colors.light.primary,
+  periodPillActive: { backgroundColor: Colors.light.primary, borderColor: Colors.light.primary, ...Shadows.sm },
+  periodPillText: { fontSize: Typography.label.sm, fontWeight: '700', color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body, letterSpacing: 0.5 },
+  periodPillTextActive: { color: Colors.light.onPrimary },
+
+  sectionAccent: { width: 4, height: 20, borderRadius: 2 },
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 4,
   },
-  periodPillText: {
-    fontSize: Typography.body.sm,
-    fontWeight: '600',
-    color: Colors.light.onSurfaceVariant,
-    fontFamily: Fonts.body,
-  },
-  periodPillTextActive: {
-    color: Colors.light.onPrimary,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    minWidth: '46%',
+  sectionHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sectionTitle: { fontSize: Typography.title.sm, fontWeight: '700', color: Colors.light.onSurface, fontFamily: Fonts.headline },
+
+  heroCard: {
     backgroundColor: Colors.light.surface,
-    borderRadius: 20,
-    padding: 20,
-    borderLeftWidth: 4,
-    shadowColor: Colors.light.onSurface,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 4,
-    gap: 10,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trendBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  trendText: {
-    fontSize: Typography.label.sm,
-    fontWeight: '700',
-    fontFamily: Fonts.body,
-  },
-  statTitle: {
-    fontSize: Typography.label.md,
-    fontWeight: '500',
-    color: Colors.light.onSurfaceVariant,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontFamily: Fonts.body,
-  },
-  statValue: {
-    fontSize: Typography.headline.lg,
-    fontWeight: '800',
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.headline,
-  },
-  section: {
-    gap: 12,
-  },
-  sectionTitle: {
-    fontSize: Typography.title.md,
-    fontWeight: '700',
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.headline,
-  },
-  chartCard: {
-    backgroundColor: Colors.light.surface,
-    borderRadius: 24,
-    padding: 20,
-    shadowColor: Colors.light.onSurface,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  funnelContainer: {
-    gap: 12,
-  },
-  funnelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  funnelLabel: {
-    width: 100,
-    fontSize: Typography.body.sm,
-    fontWeight: '600',
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.body,
-  },
-  funnelBarTrack: {
-    flex: 1,
-    height: 24,
-    backgroundColor: Colors.light.surfaceContainer,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  funnelBar: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  funnelCount: {
-    width: 36,
-    fontSize: Typography.title.sm,
-    fontWeight: '700',
-    color: Colors.light.onSurface,
-    textAlign: 'right',
-    fontFamily: Fonts.headline,
-  },
-  activityCard: {
-    backgroundColor: Colors.light.surface,
-    borderRadius: 14,
-    padding: 4,
-    shadowColor: Colors.light.onSurface,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  activityEmpty: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 24, padding: 24,
+    borderLeftWidth: 4, borderLeftColor: Colors.light.accent,
+    ...Shadows.lg,
     gap: 8,
-    padding: 24,
   },
-  activityEmptyText: {
-    fontSize: Typography.body.sm,
-    color: Colors.light.onSurfaceVariant,
-    fontFamily: Fonts.body,
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  heroLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  heroIconWrap: {
+    width: 44, height: 44, borderRadius: 14,
+    backgroundColor: Colors.light.accentContainer,
+    alignItems: 'center', justifyContent: 'center',
   },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
+  heroTrend: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8,
   },
-  activityItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.outlineVariant,
+  heroTrendText: { fontSize: Typography.label.sm, fontWeight: '700', fontFamily: Fonts.body },
+  heroValue: {
+    fontSize: Typography.display.sm, fontWeight: '800',
+    color: Colors.light.onSurface, fontFamily: Fonts.headline,
+    letterSpacing: -2, lineHeight: 44,
   },
-  activityDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  heroLabel: {
+    fontSize: Typography.label.md, fontWeight: '600',
+    color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body,
+    letterSpacing: 1,
   },
-  activityContent: {
-    flex: 1,
+
+  statsRow: { flexDirection: 'row', gap: 10 },
+  compactCard: {
+    flex: 1, backgroundColor: Colors.light.surface,
+    borderRadius: 20, padding: 18,
+    borderLeftWidth: 3,
+    ...Shadows.sm,
+    gap: 4,
+  },
+  compactValue: {
+    fontSize: Typography.headline.lg, fontWeight: '800',
+    color: Colors.light.onSurface, fontFamily: Fonts.headline,
+    letterSpacing: -1,
+  },
+  compactLabel: {
+    fontSize: Typography.label.sm, fontWeight: '600',
+    color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body,
+    letterSpacing: 0.5,
+  },
+  miniStat: {
+    width: 72, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: Colors.light.surfaceContainer,
+    borderRadius: 16, padding: 12,
     gap: 2,
   },
-  activityTitle: {
-    fontSize: Typography.title.sm,
-    fontWeight: '600',
-    color: Colors.light.onSurface,
-    fontFamily: Fonts.headline,
+  miniStatValue: {
+    fontSize: Typography.title.md, fontWeight: '800',
+    color: Colors.light.onSurface, fontFamily: Fonts.headline,
   },
-  activitySubtitle: {
-    fontSize: Typography.label.md,
-    color: Colors.light.onSurfaceVariant,
-    fontFamily: Fonts.body,
+  miniStatLabel: {
+    fontSize: 9, fontWeight: '700',
+    color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body,
+    letterSpacing: 0.5,
   },
-  activityDate: {
-    fontSize: Typography.label.sm,
-    color: Colors.light.outline,
-    marginTop: 1,
-    fontFamily: Fonts.body,
+
+  funnelRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  funnelLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 100 },
+  funnelDot: { width: 8, height: 8, borderRadius: 4 },
+  funnelLabel: {
+    fontSize: Typography.label.md, fontWeight: '600',
+    color: Colors.light.onSurface, fontFamily: Fonts.body,
   },
+  funnelBarTrack: { flex: 1, height: 26, backgroundColor: Colors.light.surfaceContainer, borderRadius: 100, overflow: 'hidden' },
+  funnelBar: { height: '100%', borderRadius: 100, alignItems: 'flex-end', justifyContent: 'center', paddingRight: 8 },
+  funnelBarText: { fontSize: 10, fontWeight: '700', color: Colors.light.onPrimary, fontFamily: Fonts.body },
+  funnelCount: {
+    width: 32, fontSize: Typography.title.sm, fontWeight: '800',
+    color: Colors.light.onSurface, textAlign: 'right', fontFamily: Fonts.headline,
+  },
+
+  activityEmpty: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, padding: 20,
+  },
+  activityEmptyText: { fontSize: Typography.body.sm, color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body },
+  activityItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+  activityItemBorder: { borderBottomWidth: 1, borderBottomColor: Colors.light.outlineVariant },
+  activityDot: { width: 10, height: 10, borderRadius: 5 },
+  activityContent: { flex: 1, gap: 2 },
+  activityTitle: { fontSize: Typography.title.sm, fontWeight: '600', color: Colors.light.onSurface, fontFamily: Fonts.headline },
+  activitySubtitle: { fontSize: Typography.label.md, color: Colors.light.onSurfaceVariant, fontFamily: Fonts.body },
+  activityDate: { fontSize: Typography.label.sm, color: Colors.light.outline, marginTop: 1, fontFamily: Fonts.body },
 })

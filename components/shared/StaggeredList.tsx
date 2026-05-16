@@ -1,4 +1,4 @@
-import { Children, useEffect } from 'react'
+import { Children, useEffect, useRef } from 'react'
 import { View, type ViewStyle } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withDelay, withTiming, withSpring, type WithSpringConfig } from 'react-native-reanimated'
 
@@ -54,6 +54,9 @@ function StaggeredItem({
     ],
   }))
 
+  const childrenRef = useRef(children)
+  childrenRef.current = children
+
   useEffect(() => {
     const animConfig = spring
       ? { withDelay, withSpring: (val: number, cfg: WithSpringConfig) => withSpring(val, cfg) }
@@ -71,7 +74,7 @@ function StaggeredItem({
       ? withSpring(0, springConfig)
       : withTiming(0, { duration: 400 })
     )
-  }, [spring])
+  }, [spring, childrenRef])
 
   return (
     <Animated.View style={animatedStyle}>
@@ -88,11 +91,13 @@ export default function StaggeredList({
   spring = true,
   style,
 }: StaggeredListProps) {
+  useRef(Children.count(children))
   return (
     <View style={style}>
       {Children.map(children, (child, index) =>
         child ? (
           <StaggeredItem
+            key={index}
             index={index}
             staggerDelay={staggerDelay}
             initialDelay={initialDelay}

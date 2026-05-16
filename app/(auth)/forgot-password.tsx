@@ -3,11 +3,13 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Animated, KeyboardAvoidi
 import { Link } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors, Typography, Fonts } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export default function ForgotPasswordScreen() {
+  const colors = useColors()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -45,7 +47,7 @@ export default function ForgotPasswordScreen() {
           <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.sentContainer}>
               <View style={styles.sentIcon}>
-                  <Ionicons name="checkmark-circle" size={40} color={Colors.light.success} />
+                  <Ionicons name="checkmark-circle" size={40} color={colors.success} />
               </View>
               <Text style={styles.title}>Check your email</Text>
               <Text style={styles.subtitle}>
@@ -54,7 +56,7 @@ export default function ForgotPasswordScreen() {
                 instructions.
               </Text>
               <Link href={'/(auth)/login' as any} style={styles.backLink}>
-                <Ionicons name="arrow-back" size={16} color={Colors.light.primary} />
+                <Ionicons name="arrow-back" size={16} color={colors.primary} />
                 <Text style={styles.backLinkText}> Back to login</Text>
               </Link>
             </View>
@@ -75,12 +77,12 @@ export default function ForgotPasswordScreen() {
       >
         <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <Link href={'/(auth)/login' as any} style={styles.backLink}>
-            <Ionicons name="arrow-back" size={16} color={Colors.light.onSurfaceVariant} />
+            <Ionicons name="arrow-back" size={16} color={colors.onSurfaceVariant} />
             <Text style={styles.backLinkSubText}> Back to login</Text>
           </Link>
 
           <View style={styles.iconContainer}>
-            <Ionicons name="mail-outline" size={28} color={Colors.light.primary} />
+            <Ionicons name="mail-outline" size={28} color={colors.primary} />
           </View>
 
           <Text style={styles.title}>Reset your password</Text>

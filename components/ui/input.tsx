@@ -1,5 +1,6 @@
-import { forwardRef, useState } from 'react'
+import { forwardRef, useState, useMemo } from 'react'
 import { View, TextInput, Text, StyleSheet, type TextInputProps, type ViewStyle } from 'react-native'
+import { useColors } from '@/hooks/useColors'
 import { Colors, Typography, Fonts } from '@/constants/theme'
 
 interface InputProps extends Omit<TextInputProps, 'style'> {
@@ -12,6 +13,8 @@ interface InputProps extends Omit<TextInputProps, 'style'> {
 
 const Input = forwardRef<TextInput, InputProps>(
   ({ error, hint, left, right, containerStyle, ...props }, ref) => {
+    const colors = useColors()
+    const styles = useMemo(() => getStyles(colors), [colors])
     const [focused, setFocused] = useState(false)
 
     return (
@@ -25,7 +28,7 @@ const Input = forwardRef<TextInput, InputProps>(
           <TextInput
             ref={ref}
             style={styles.input}
-            placeholderTextColor={Colors.light.onSurfaceVariant}
+            placeholderTextColor={colors.onSurfaceVariant}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             {...({ accessibilityInvalid: !!error } as any)}
@@ -44,45 +47,47 @@ const Input = forwardRef<TextInput, InputProps>(
 )
 Input.displayName = 'Input'
 
-const styles = StyleSheet.create({
-  wrapper: {
-    gap: 4,
-  },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.outline,
-    backgroundColor: Colors.light.input,
-    paddingHorizontal: 16,
-  },
-  focused: {
-    borderColor: Colors.light.primary,
-  },
-  errorBorder: {
-    borderColor: Colors.light.error,
-  },
-  input: {
-    flex: 1,
-    fontSize: Typography.body.sm,
-    color: Colors.light.onSurface,
-    paddingVertical: 0,
-  },
-  side: {
-    marginHorizontal: 4,
-  },
-  errorText: {
-    fontSize: Typography.label.md,
-    color: Colors.light.error,
-    fontFamily: Fonts.body,
-  },
-  hintText: {
-    fontSize: Typography.label.md,
-    color: Colors.light.onSurfaceVariant,
-    fontFamily: Fonts.body,
-  },
-})
+function getStyles(c: typeof Colors.light) {
+  return StyleSheet.create({
+    wrapper: {
+      gap: 4,
+    },
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 48,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.outline,
+      backgroundColor: c.input,
+      paddingHorizontal: 16,
+    },
+    focused: {
+      borderColor: c.primary,
+    },
+    errorBorder: {
+      borderColor: c.error,
+    },
+    input: {
+      flex: 1,
+      fontSize: Typography.body.sm,
+      color: c.onSurface,
+      paddingVertical: 0,
+    },
+    side: {
+      marginHorizontal: 4,
+    },
+    errorText: {
+      fontSize: Typography.label.md,
+      color: c.error,
+      fontFamily: Fonts.body,
+    },
+    hintText: {
+      fontSize: Typography.label.md,
+      color: c.onSurfaceVariant,
+      fontFamily: Fonts.body,
+    },
+  })
+}
 
 export { Input }

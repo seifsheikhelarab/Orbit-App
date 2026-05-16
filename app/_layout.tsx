@@ -6,7 +6,9 @@ import { ActivityIndicator, Platform, View } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import 'react-native-reanimated'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { Colors } from '@/constants/theme'
+import { ReduceMotionProvider } from '@/hooks/useReduceMotion'
 import * as Font from 'expo-font'
 import {
   Inter_400Regular,
@@ -70,19 +72,8 @@ export default function RootLayout() {
     }, 5000)
 
     Font.loadAsync({
-      Inter: {
-        400: Inter_400Regular,
-        500: Inter_500Medium,
-        600: Inter_600SemiBold,
-        700: Inter_700Bold,
-      },
-      Manrope: {
-        400: Manrope_400Regular,
-        500: Manrope_500Medium,
-        600: Manrope_600SemiBold,
-        700: Manrope_700Bold,
-        800: Manrope_800ExtraBold,
-      },
+      Inter: { 400: Inter_400Regular, 500: Inter_500Medium, 600: Inter_600SemiBold, 700: Inter_700Bold } as any,
+      Manrope: { 400: Manrope_400Regular, 500: Manrope_500Medium, 600: Manrope_600SemiBold, 700: Manrope_700Bold, 800: Manrope_800ExtraBold } as any,
     })
       .then(() => {
         clearTimeout(timer)
@@ -106,6 +97,8 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <ReduceMotionProvider>
+        <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <AuthGate>
@@ -140,6 +133,8 @@ export default function RootLayout() {
         </AuthGate>
       </AuthProvider>
     </QueryClientProvider>
+        </ThemeProvider>
+      </ReduceMotionProvider>
     </SafeAreaProvider>
   )
 }

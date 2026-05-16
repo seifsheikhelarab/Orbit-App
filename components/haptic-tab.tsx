@@ -1,8 +1,10 @@
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { PlatformPressable } from '@react-navigation/elements';
 import * as Haptics from 'expo-haptics';
+import { useColors } from '@/hooks/useColors';
 
 export function HapticTab(props: BottomTabBarButtonProps) {
+  useColors(); // subscribe to theme changes
   return (
     <PlatformPressable
       {...props}

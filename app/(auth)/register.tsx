@@ -4,10 +4,12 @@ import { Link, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { signUp, signIn } from '@/lib/auth-client'
 import { cacheSessionFromLogin } from '@/contexts/AuthContext'
-import { Colors, Typography, Fonts } from '@/constants/theme'
+import { Colors, Typography, Fonts, Shadows } from '@/constants/theme'
+import { useColors } from '@/hooks/useColors'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
+// NOTE: uses Colors.light - needs dark mode support via useColors refactor
 function getPasswordStrength(pw: string) {
   let score = 0
   if (pw.length >= 8) score++
@@ -16,13 +18,22 @@ function getPasswordStrength(pw: string) {
   if (/\d/.test(pw)) score++
   if (/[^a-zA-Z0-9]/.test(pw)) score++
   if (pw.length === 0) return { level: 0, label: '', color: Colors.light.onSurfaceVariant, barColor: 'transparent', width: '0%' }
-  if (score <= 1) return { level: 1, label: 'Weak', color: Colors.light.error, barColor: Colors.light.error, width: '25%' }
-  if (score === 2) return { level: 2, label: 'Fair', color: Colors.light.warning, barColor: Colors.light.warning, width: '50%' }
-  if (score === 3) return { level: 3, label: 'Good', color: Colors.light.primary, barColor: Colors.light.primary, width: '75%' }
-  return { level: 4, label: 'Strong', color: Colors.light.success, barColor: Colors.light.success, width: '100%' }
+  if (score <= 1) return { level: 1, label: 'WEAK', color: Colors.light.error, barColor: Colors.light.error, width: '25%' }
+  if (score === 2) return { level: 2, label: 'FAIR', color: Colors.light.warning, barColor: Colors.light.warning, width: '50%' }
+  if (score === 3) return { level: 3, label: 'GOOD', color: Colors.light.primary, barColor: Colors.light.primary, width: '75%' }
+  return { level: 4, label: 'STRONG', color: Colors.light.success, barColor: Colors.light.success, width: '100%' }
 }
 
+const DECORATIVE_DOTS = [
+  { top: '8%', right: '10%', size: 5, opacity: 0.2 },
+  { top: '18%', left: '6%', size: 7, opacity: 0.15 },
+  { top: '40%', right: '4%', size: 4, opacity: 0.25 },
+  { top: '60%', left: '12%', size: 6, opacity: 0.12 },
+  { top: '78%', right: '14%', size: 3, opacity: 0.2 },
+]
+
 export default function RegisterScreen() {
+  const colors = useColors()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,14 +42,17 @@ export default function RegisterScreen() {
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
-  const fadeAnim = useRef(new Animated.Value(0)).current
-  const slideAnim = useRef(new Animated.Value(12)).current
+  const entrance = useRef([...Array(5)].map(() => new Animated.Value(0))).current
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
-    ]).start()
+    entrance.forEach((anim, i) => {
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 500,
+        delay: i * 100,
+        useNativeDriver: true,
+      }).start()
+    })
   }, [])
 
   const strength = useMemo(() => getPasswordStrength(password), [password])
@@ -47,20 +61,15 @@ export default function RegisterScreen() {
     setLoading(true)
     setErrorMsg('')
     setSuccessMsg('')
-    const { error, data } = await signUp.email({
-      email,
-      password,
-      name,
-      callbackURL: '/',
-    })
+    const { error, data } = await signUp.email({ email, password, name, callbackURL: '/' })
     if (error) {
       setErrorMsg(error.message || 'Registration failed')
       setLoading(false)
     } else if (data) {
       await cacheSessionFromLogin(data)
-      setSuccessMsg('Account created! Redirecting...')
+      setSuccessMsg('Access granted. Redirecting...')
       setLoading(false)
-      setTimeout(() => router.replace('/(tabs)' as any), 1500)
+      setTimeout(() => router.replace('/(tabs)' as const), 1500)
     }
   }
 
@@ -74,120 +83,117 @@ export default function RegisterScreen() {
     return 'shield-checkmark'
   }
 
+  const staggerStyle = (index: number) => ({
+    opacity: entrance[index],
+    transform: [{ translateY: entrance[index].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
+  })
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        {DECORATIVE_DOTS.map((dot, i) => (
+          <View
+            key={i}
+            style={[styles.decorativeDot, {
+              top: dot.top as any,
+              left: (dot as any).left,
+              right: (dot as any).right,
+              width: dot.size,
+              height: dot.size,
+              borderRadius: dot.size / 2,
+              opacity: dot.opacity,
+              backgroundColor: colors.primary,
+            }]}
+          />
+        ))}
+        <View style={styles.orbitalRing} />
+
+        <Animated.View style={[styles.card, staggerStyle(0)]}>
+          <View style={styles.accentBar} />
+
           <View style={styles.header}>
-            <Ionicons name="rocket-outline" size={48} color={Colors.light.primary} style={styles.logo} />
+            <View style={styles.logoWrap}>
+              <Ionicons name="rocket-outline" size={36} color={colors.accent} />
+            </View>
+            <Text style={styles.badgeText}>NEW PERSONNEL</Text>
             <Text style={styles.title}>Create account</Text>
-            <Text style={styles.subtitle}>Start your journey with Orbit today.</Text>
+            <Text style={styles.subtitle}>Establish your mission credentials.</Text>
           </View>
 
-          <Button variant="outline" onPress={handleGoogle}><Ionicons name="logo-google" size={20} /><Text> Sign up with Google</Text></Button>
+          <Animated.View style={staggerStyle(1)}>
+            <Button variant="outline" onPress={handleGoogle}>
+              <Ionicons name="logo-google" size={18} color={colors.onSurfaceVariant} />
+              <Text style={{ color: colors.onSurface }}>  Sign up with Google</Text>
+            </Button>
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or sign up with email</Text>
-            <View style={styles.dividerLine} />
-          </View>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or register with email</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          </Animated.View>
 
           {errorMsg ? (
-            <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle" size={16} color={Colors.light.error} />
+            <Animated.View style={[styles.errorBanner, staggerStyle(2)]}>
+              <Ionicons name="alert-circle" size={16} color={colors.error} />
               <Text style={styles.errorText}>{errorMsg}</Text>
-            </View>
+            </Animated.View>
           ) : null}
 
           {successMsg ? (
-            <View style={[styles.errorBanner, { backgroundColor: Colors.light.successContainer }]}>
-              <Ionicons name="mail-outline" size={16} color={Colors.light.success} />
-              <Text style={[styles.errorText, { color: Colors.light.success }]}>{successMsg}</Text>
-            </View>
+            <Animated.View style={[styles.successBanner, staggerStyle(2)]}>
+              <Ionicons name="shield-checkmark-outline" size={16} color={colors.success} />
+              <Text style={styles.successText}>{successMsg}</Text>
+            </Animated.View>
           ) : null}
 
-          <View style={styles.form}>
+          <Animated.View style={[styles.form, staggerStyle(2)]}>
             <View style={styles.field}>
-              <Text style={styles.label}>Full Name</Text>
+              <Text style={styles.label}>FULL NAME</Text>
+              <Input value={name} onChangeText={setName} placeholder="Alex Rivera" autoCapitalize="words" />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>EMAIL ADDRESS</Text>
               <Input
-                value={name}
-                onChangeText={setName}
-                placeholder="Alex Rivera"
-                autoCapitalize="words"
+                value={email} onChangeText={setEmail} placeholder="alex@example.com"
+                keyboardType="email-address" autoCapitalize="none" autoCorrect={false}
               />
             </View>
-
             <View style={styles.field}>
-              <Text style={styles.label}>Email Address</Text>
+              <Text style={styles.label}>PASSWORD</Text>
               <Input
-                value={email}
-                onChangeText={setEmail}
-                placeholder="alex@example.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Password</Text>
-              <Input
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter your password"
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
+                value={password} onChangeText={setPassword} placeholder="Enter your password"
+                secureTextEntry={!showPassword} autoCapitalize="none"
                 right={
-                  <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={Colors.light.outline} />
+                  <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton} accessibilityRole="button">
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.outline} />
                   </Pressable>
                 }
               />
-
               {password.length > 0 ? (
                 <View style={styles.strengthContainer}>
                   <View style={styles.strengthBars}>
                     {[1, 2, 3, 4].map((i) => (
-                      <View
-                        key={i}
-                        style={[
-                          styles.strengthBar,
-                          {
-                            backgroundColor: i <= strength.level ? strength.barColor : Colors.light.outlineVariant,
-                          },
-                        ]}
-                      />
+                      <View key={i} style={[styles.strengthBar, { backgroundColor: i <= strength.level ? strength.barColor : Colors.light.outlineVariant }]} />
                     ))}
                   </View>
                   <View style={styles.strengthLabel}>
-                    <Ionicons
-                      name={strengthIcon(strength.level) as any}
-                      size={12}
-                      color={strength.color}
-                    />
-                    <Text style={[styles.strengthText, { color: strength.color }]}>
-                      {strength.label} password
-                    </Text>
+                    <Ionicons name={strengthIcon(strength.level) as any} size={12} color={strength.color} />
+                    <Text style={[styles.strengthText, { color: strength.color }]}>{strength.label} PASSWORD</Text>
                   </View>
                 </View>
               ) : null}
             </View>
+          </Animated.View>
 
+          <Animated.View style={staggerStyle(3)}>
             <Button onPress={handleRegister} loading={loading} size="lg">Create Account</Button>
-          </View>
+          </Animated.View>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <Link href={'/(auth)/login' as any} style={styles.footerLink}>
-              Log in
-            </Link>
-          </View>
+          <Animated.View style={[styles.footer, staggerStyle(4)]}>
+            <Text style={styles.footerText}>Already registered? </Text>
+            <Link href={'/(auth)/login' as any} style={styles.footerLink}>Sign in</Link>
+          </Animated.View>
         </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -195,135 +201,98 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-    paddingVertical: 48,
+  container: { flex: 1, backgroundColor: Colors.light.background },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingVertical: 48 },
+  decorativeDot: { position: 'absolute', zIndex: 0 },
+  orbitalRing: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    borderWidth: 1,
+    borderColor: Colors.light.accent + '10',
+    bottom: '10%',
+    left: -50,
   },
   card: {
     backgroundColor: Colors.light.surface,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 32,
-    shadowColor: Colors.light.onSurface,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 8,
+    ...Shadows.xl,
+    overflow: 'hidden',
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
+  accentBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: Colors.light.accent,
   },
-  logo: {
+  header: { alignItems: 'center', marginBottom: 28 },
+  logoWrap: {
+    width: 64, height: 64, borderRadius: 20,
+    backgroundColor: Colors.light.accentContainer,
+    alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
+  },
+  badgeText: {
+    fontSize: Typography.label.sm, fontFamily: Fonts.body,
+    fontWeight: '700', color: Colors.light.accent,
+    letterSpacing: 2, marginBottom: 8,
   },
   title: {
-    fontSize: Typography.headline.lg,
-    fontFamily: Fonts.headline,
-    fontWeight: '800',
-    color: Colors.light.onSurface,
-    letterSpacing: -0.5,
-    marginBottom: 8,
+    fontSize: Typography.headline.lg, fontFamily: Fonts.headline,
+    fontWeight: '800', color: Colors.light.onSurface,
+    letterSpacing: -0.5, marginBottom: 8,
   },
   subtitle: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
+    fontSize: Typography.body.sm, fontFamily: Fonts.body,
+    color: Colors.light.onSurfaceVariant, letterSpacing: 0.3,
   },
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
+    flexDirection: 'row', alignItems: 'center', marginVertical: 20,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.light.outlineVariant,
-  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.light.outlineVariant },
   dividerText: {
-    fontSize: Typography.label.sm,
-    fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
-    marginHorizontal: 16,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    fontSize: Typography.label.sm, fontFamily: Fonts.body,
+    color: Colors.light.onSurfaceVariant, marginHorizontal: 16,
+    letterSpacing: 0.8, textTransform: 'uppercase',
   },
   errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-                backgroundColor: Colors.light.errorContainer,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: Colors.light.errorContainer, borderRadius: 8,
+    padding: 12, marginBottom: 16,
   },
   errorText: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    color: Colors.light.error,
-    fontWeight: '500',
-    flex: 1,
+    fontSize: Typography.body.sm, fontFamily: Fonts.body,
+    color: Colors.light.error, fontWeight: '500', flex: 1,
   },
-  form: {
-    gap: 20,
+  successBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: Colors.light.successContainer, borderRadius: 8,
+    padding: 12, marginBottom: 16,
   },
-  field: {
-    gap: 6,
+  successText: {
+    fontSize: Typography.body.sm, fontFamily: Fonts.body,
+    color: Colors.light.success, fontWeight: '500', flex: 1,
   },
+  form: { gap: 20 },
+  field: { gap: 6 },
   label: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    fontWeight: '600',
-    color: Colors.light.onSurface,
+    fontSize: Typography.label.sm, fontFamily: Fonts.body,
+    fontWeight: '700', color: Colors.light.onSurface, letterSpacing: 0.8,
   },
-  eyeButton: {
-    padding: 12,
-  },
-  strengthContainer: {
-    marginTop: 8,
-    gap: 6,
-  },
-  strengthBars: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  strengthBar: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.light.outlineVariant,
-  },
-  strengthLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
+  eyeButton: { padding: 12 },
+  strengthContainer: { marginTop: 8, gap: 6 },
+  strengthBars: { flexDirection: 'row', gap: 6 },
+  strengthBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: Colors.light.outlineVariant },
+  strengthLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   strengthText: {
-    fontSize: Typography.label.sm,
-    fontFamily: Fonts.body,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: Typography.label.sm, fontFamily: Fonts.body,
+    fontWeight: '700', letterSpacing: 0.8,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 32,
-  },
-  footerText: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    color: Colors.light.onSurfaceVariant,
-  },
-  footerLink: {
-    fontSize: Typography.body.sm,
-    fontFamily: Fonts.body,
-    fontWeight: '700',
-    color: Colors.light.primary,
-  },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
+  footerText: { fontSize: Typography.body.sm, fontFamily: Fonts.body, color: Colors.light.onSurfaceVariant },
+  footerLink: { fontSize: Typography.body.sm, fontFamily: Fonts.body, fontWeight: '700', color: Colors.light.accent },
 })
