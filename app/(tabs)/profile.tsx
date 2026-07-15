@@ -16,21 +16,6 @@ import { Label } from '@/components/ui/label'
 import { useProfile, useUpdateProfile } from '@/features/profile/api/useProfile'
 import { defaultResumeData, type ResumeData } from '@/features/resumes/api/types'
 
-function DossierScore({ label, score, c }: { label: string; score: number; c: typeof Colors.light }) {
-  const s = getStyles(c)
-  return (
-    <View style={s.scoreRow}>
-      <View style={s.scoreLabel}>
-        <Text style={s.scoreLabelText}>{label}</Text>
-        <Text style={s.scoreValue}>{score}%</Text>
-      </View>
-      <View style={s.scoreTrack}>
-        <View style={[s.scoreBar, { width: `${score}%` }]} />
-      </View>
-    </View>
-  )
-}
-
 export default function ProfileScreen() {
   const colors = useColors()
   const insets = useSafeAreaInsets()
@@ -76,10 +61,6 @@ export default function ProfileScreen() {
       return next
     })
   }, [])
-
-  const identityScore = formData.basics.name && formData.basics.summary ? 100 : 40
-  const expScore = Math.min(formData.work.length * 25, 100)
-  const skillScore = Math.min(formData.skills.length * 10, 100)
 
   if (isLoading) {
     return (
@@ -197,7 +178,7 @@ export default function ProfileScreen() {
                     </View>
                     <Label>Impact & Key Results</Label>
                     <Textarea value={exp.highlights} onChangeText={(v) => set(['work', i, 'highlights'], v)} placeholder="List your primary achievements..." style={getStyles(colors).inlineMt4} />
-                    <Pressable onPress={() => setFormData(prev => ({ ...prev, work: prev.work.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
+                    <Pressable onPress={() => setFormData(prev => ({ ...prev, work: prev.work.filter((_, idx) => idx !== i) }))} accessibilityRole="button" style={{ paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}>
                       <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
@@ -240,7 +221,7 @@ export default function ProfileScreen() {
                         <Input value={edu.endDate} onChangeText={(v) => set(['education', i, 'endDate'], v)} placeholder="YYYY" containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
-                    <Pressable onPress={() => setFormData(prev => ({ ...prev, education: prev.education.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
+                    <Pressable onPress={() => setFormData(prev => ({ ...prev, education: prev.education.filter((_, idx) => idx !== i) }))} accessibilityRole="button" style={{ paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}>
                       <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
@@ -275,7 +256,7 @@ export default function ProfileScreen() {
                     </View>
                     <Label>Description</Label>
                     <Textarea value={proj.highlights} onChangeText={(v) => set(['projects', i, 'highlights'], v)} placeholder="Explain the problem solved and your contribution..." style={getStyles(colors).inlineMt4} />
-                    <Pressable onPress={() => setFormData(prev => ({ ...prev, projects: prev.projects.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
+                    <Pressable onPress={() => setFormData(prev => ({ ...prev, projects: prev.projects.filter((_, idx) => idx !== i) }))} accessibilityRole="button" style={{ paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}>
                       <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
@@ -300,7 +281,7 @@ export default function ProfileScreen() {
                   {formData.skills.map((skill, i) => (
                     <View key={i} style={getStyles(colors).skillChip}>
                       <Text style={getStyles(colors).skillChipText}>{skill.name}</Text>
-                      <Pressable onPress={() => setFormData(prev => ({ ...prev, skills: prev.skills.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
+                      <Pressable onPress={() => setFormData(prev => ({ ...prev, skills: prev.skills.filter((_, idx) => idx !== i) }))} accessibilityRole="button" style={{ padding: 4, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
                         <Ionicons name="close" size={14} color={colors.onSurfaceVariant} />
                       </Pressable>
                     </View>
@@ -346,7 +327,7 @@ export default function ProfileScreen() {
                         <Input value={vol.position} onChangeText={(v) => set(['volunteer', i, 'position'], v)} containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
-                    <Pressable onPress={() => setFormData(prev => ({ ...prev, volunteer: prev.volunteer.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
+                    <Pressable onPress={() => setFormData(prev => ({ ...prev, volunteer: prev.volunteer.filter((_, idx) => idx !== i) }))} accessibilityRole="button" style={{ paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}>
                       <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
@@ -379,7 +360,7 @@ export default function ProfileScreen() {
                         <Input value={lang.fluency} onChangeText={(v) => set(['languages', i, 'fluency'], v)} placeholder="Native / Fluent" containerStyle={getStyles(colors).inlineMt4} />
                       </View>
                     </View>
-                    <Pressable onPress={() => setFormData(prev => ({ ...prev, languages: prev.languages.filter((_, idx) => idx !== i) }))} accessibilityRole="button">
+                    <Pressable onPress={() => setFormData(prev => ({ ...prev, languages: prev.languages.filter((_, idx) => idx !== i) }))} accessibilityRole="button" style={{ paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}>
                       <Text style={getStyles(colors).removeText}>Remove</Text>
                     </Pressable>
                   </View>
@@ -394,23 +375,6 @@ export default function ProfileScreen() {
 
           {/* Sidebar */}
           <View style={getStyles(colors).sidebar}>
-            <View style={getStyles(colors).readinessCard}>
-              <View style={getStyles(colors).readinessHeader}>
-                <Ionicons name="sparkles-outline" size={20} color={colors.accent} />
-                <Text style={getStyles(colors).readinessTitle}>Intelligence Readiness</Text>
-              </View>
-              <Text style={getStyles(colors).readinessDesc}>
-                Our models use this dossier as the ground truth. The higher the completeness, the better the tailoring accuracy.
-              </Text>
-              <DossierScore label="Identity Record" score={identityScore} c={colors} />
-              <DossierScore label="Experience Volume" score={expScore} c={colors} />
-              <DossierScore label="Skill Density" score={skillScore} c={colors} />
-              <View style={getStyles(colors).readinessStatus}>
-                <View style={getStyles(colors).statusDot} />
-                <Text style={getStyles(colors).statusText}>Connected</Text>
-              </View>
-            </View>
-
             <Pressable style={getStyles(colors).autocvCard} onPress={() => router.push('/(tabs)/autocv' as const)} accessibilityRole="button">
               <View style={getStyles(colors).autocvTop}>
                 <View style={[getStyles(colors).sectionIcon, { backgroundColor: hexa(colors.accent, 0.08) }]}>
@@ -463,23 +427,6 @@ const getStyles = (c: typeof Colors.light) => StyleSheet.create({
   emptySkills: { fontSize: Typography.body.sm, color: c.onSurfaceVariant, fontFamily: Fonts.body, fontStyle: 'italic', marginBottom: 12 },
   addSkillRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   addSkillBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
-  readinessCard: {
-    backgroundColor: c.primary,
-    borderRadius: 28, padding: 24,
-    gap: 16,
-  },
-  readinessHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  readinessTitle: { fontSize: Typography.body.md, fontWeight: '700', color: c.onPrimary, fontFamily: Fonts.headline },
-  readinessDesc: { fontSize: Typography.label.sm, color: hexa(c.onPrimary, 0.70), fontFamily: Fonts.body, lineHeight: 16 },
-  scoreRow: { gap: 6 },
-  scoreLabel: { flexDirection: 'row', justifyContent: 'space-between' },
-  scoreLabelText: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(c.onPrimary, 0.60), fontFamily: Fonts.body },
-  scoreValue: { fontSize: 9, fontWeight: '700', color: c.accent, fontFamily: Fonts.body },
-  scoreTrack: { height: 4, backgroundColor: hexa(c.onPrimary, 0.10), borderRadius: 2, overflow: 'hidden' },
-  scoreBar: { height: '100%', backgroundColor: c.accent, borderRadius: 2 },
-  readinessStatus: { flexDirection: 'row', alignItems: 'center', gap: 6, borderTopWidth: 1, borderTopColor: hexa(c.onPrimary, 0.10), paddingTop: 12 },
-  statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.accent },
-  statusText: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(c.onPrimary, 0.40), fontFamily: Fonts.body },
   autocvCard: {
     backgroundColor: c.surfaceContainerLow,
     borderRadius: 24, padding: 20,
@@ -487,5 +434,5 @@ const getStyles = (c: typeof Colors.light) => StyleSheet.create({
   },
   autocvTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   autocvTitle: { fontSize: Typography.body.md, fontWeight: '700', color: c.onSurface, fontFamily: Fonts.headline },
-  autocvSub: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(c.onSurfaceVariant, 0.50), marginTop: 2, fontFamily: Fonts.body },
+  autocvSub: { fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, color: hexa(c.onSurfaceVariant, 0.65), marginTop: 2, fontFamily: Fonts.body },
 })

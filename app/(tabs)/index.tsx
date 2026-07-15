@@ -203,16 +203,18 @@ export default function DashboardScreen() {
 
   if (isLoading) {
     return (
-      <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <PageHeader icon="grid-outline" iconVariant="accent" title="Mission Dashboard" subtitle="30d outlook" />
-        <View style={{ height: 160, borderRadius: 24, backgroundColor: colors.surfaceContainer, marginBottom: 12 }} />
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1, height: 100, borderRadius: 20, backgroundColor: colors.surfaceContainer }} />
-          <View style={{ flex: 1, height: 100, borderRadius: 20, backgroundColor: colors.surfaceContainer }} />
-        </View>
-      </ScrollView>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <PageHeader icon="grid-outline" iconVariant="accent" title="Mission Dashboard" subtitle={`${period} outlook`} />
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          <View style={{ height: 160, borderRadius: 24, backgroundColor: colors.surfaceContainer, marginBottom: 12 }} />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1, height: 100, borderRadius: 20, backgroundColor: colors.surfaceContainer }} />
+            <View style={{ flex: 1, height: 100, borderRadius: 20, backgroundColor: colors.surfaceContainer }} />
+          </View>
+        </ScrollView>
+      </View>
     )
   }
 
@@ -224,26 +226,28 @@ export default function DashboardScreen() {
       ?? allErrors.find(e => e.message)?.message
       ?? 'Something went wrong'
     return (
-      <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <PageHeader icon="grid-outline" iconVariant="accent" title="Mission Dashboard" subtitle="30d outlook" />
-        <ApiError message={errorMessage} onRetry={onRefresh} fullScreen />
-      </ScrollView>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <PageHeader icon="grid-outline" iconVariant="accent" title="Mission Dashboard" subtitle={`${period} outlook`} />
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          <ApiError message={errorMessage} onRetry={onRefresh} fullScreen />
+        </ScrollView>
+      </View>
     )
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView style={[styles.container, { paddingTop: insets.top }]} contentContainerStyle={styles.content}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <PageHeader
+        icon="grid-outline"
+        iconVariant="accent"
+        title="Mission Dashboard"
+        subtitle={`${period} outlook`}
+      />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <PageHeader
-          icon="grid-outline"
-          iconVariant="accent"
-          title="Mission Dashboard"
-          subtitle={`${period} outlook`}
-        />
         <View style={styles.periodPillRow}>
           {periods.map(p => (
             <Pressable

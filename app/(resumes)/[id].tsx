@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import * as Print from 'expo-print'
 import * as Sharing from 'expo-sharing'
@@ -162,6 +163,7 @@ function getEntryStyles(c: typeof Colors.light) {
 
 export default function BuilderScreen() {
   const colors = useColors()
+  const insets = useSafeAreaInsets()
   const { id } = useLocalSearchParams<{ id: string }>()
   const entryStyles = useMemo(() => getEntryStyles(colors), [colors])
   const styles = useMemo(() => getBuilderStyles(colors), [colors])
@@ -306,7 +308,7 @@ export default function BuilderScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
         <Spinner />
       </View>
     )
@@ -314,7 +316,7 @@ export default function BuilderScreen() {
 
   if (isError || !document) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
         <Text style={{ color: colors.error }}>Failed to load document.</Text>
       </View>
     )
@@ -1409,7 +1411,7 @@ export default function BuilderScreen() {
   )
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
@@ -1534,7 +1536,7 @@ function getBuilderStyles(c: typeof Colors.light) {
     },
     scrollContent: {
       padding: 16,
-      paddingBottom: 60,
+      paddingBottom: 100,
       gap: 16,
     },
   })

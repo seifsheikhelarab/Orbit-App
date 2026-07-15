@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+import { forwardRef, useState } from 'react'
 import { Pressable, Text, ActivityIndicator, StyleSheet, type ViewStyle, type TextStyle } from 'react-native'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { useColors } from '@/hooks/useColors'
@@ -77,6 +77,7 @@ interface ButtonProps extends VariantProps<typeof buttonVariants> {
 const Button = forwardRef<any, ButtonProps>(
   ({ variant = 'default', size = 'default', disabled, loading, style, textStyle, onPress, children, accessibilityLabel }, ref) => {
     const colors = useColors()
+    const [focused, setFocused] = useState(false)
 
     const getVariantBg = (v: string | null | undefined): ViewStyle => {
       switch (v) {
@@ -120,7 +121,9 @@ const Button = forwardRef<any, ButtonProps>(
         disabled={disabled || loading}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? (typeof children === 'string' ? children : undefined)}
-        style={({ pressed }) => [
+        onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={({ pressed }) => [
           buttonBase,
           sizeStyles[size!],
           variantBg,
@@ -150,6 +153,8 @@ const Button = forwardRef<any, ButtonProps>(
             opacity: pressed ? 0.85 : 1,
             transform: pressed ? [{ scale: 0.96 }] : [],
           },
+          focused && variant !== 'link' && variant !== 'ghost' && variant !== 'outline' && { borderWidth: 2, borderColor: colors.primary },
+          focused && (variant === 'outline' || variant === 'ghost' || variant === 'link') && { opacity: 0.8 },
           (disabled || loading) && { opacity: 0.5 },
           style,
         ]}

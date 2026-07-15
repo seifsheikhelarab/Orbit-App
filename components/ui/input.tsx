@@ -11,10 +11,11 @@ interface InputProps extends Omit<TextInputProps, 'style'> {
   left?: React.ReactNode
   right?: React.ReactNode
   clearable?: boolean
+  accessibilityLabel?: string
 }
 
 const Input = forwardRef<TextInput, InputProps>(
-  ({ error, hint, left, right, clearable, containerStyle, onChangeText, value, ...props }, ref) => {
+  ({ error, hint, left, right, clearable, containerStyle, onChangeText, value, accessibilityLabel, ...props }, ref) => {
     const colors = useColors()
     const styles = useMemo(() => getStyles(colors), [colors])
     const [focused, setFocused] = useState(false)
@@ -41,7 +42,7 @@ const Input = forwardRef<TextInput, InputProps>(
             placeholderTextColor={colors.onSurfaceVariant}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            {...({ accessibilityInvalid: !!error } as any)}
+            accessibilityLabel={accessibilityLabel}
             {...props}
           />
           {showClear && (

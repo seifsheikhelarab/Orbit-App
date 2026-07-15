@@ -3,12 +3,12 @@ import { Stack, usePathname, useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect, useState, useRef } from 'react'
 import { Platform, View } from 'react-native'
+import { useThemeMode } from '@/contexts/ThemeContext'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import 'react-native-reanimated'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { Colors } from '@/constants/theme'
-import { useColorScheme } from '@/hooks/use-color-scheme'
 import { ReduceMotionProvider } from '@/hooks/useReduceMotion'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { LoadingFallback } from '@/components/shared/LoadingFallback'
@@ -64,8 +64,17 @@ export const unstable_settings = {
 
 const isNative = Platform.OS === 'ios' || Platform.OS === 'android'
 
+function ThemedStatusBar() {
+  const { isDark } = useThemeMode()
+  return (
+    <StatusBar
+      style={isDark ? 'light' : 'dark'}
+      backgroundColor={isDark ? Colors.dark.background : Colors.light.background}
+    />
+  )
+}
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme()
   const [fontsLoaded, setFontsLoaded] = useState(false)
   const fontTimeout = useRef(false)
 
@@ -130,7 +139,7 @@ export default function RootLayout() {
               }}
             />
           </Stack>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} backgroundColor={colorScheme === 'dark' ? Colors.dark.surface : Colors.light.surface} />
+          <ThemedStatusBar />
         </AuthGate>
       </AuthProvider>
       </ErrorBoundary>

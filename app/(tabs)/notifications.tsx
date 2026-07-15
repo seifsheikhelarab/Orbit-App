@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl, Alert, ActivityIndicator } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -17,6 +17,7 @@ export default function NotificationsScreen() {
   const colors = useColors()
   const insets = useSafeAreaInsets()
   const router = useRouter()
+  const styles = useMemo(() => getStyles(colors), [colors])
   const { data: notifications, isLoading, isError, error, refetch, isRefetching } = useNotifications()
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
@@ -47,7 +48,7 @@ export default function NotificationsScreen() {
   }, [router])
 
   return (
-    <View style={[getStyles(colors).container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <PageHeader
         icon="notifications-outline"
         iconVariant="accent"
@@ -65,14 +66,14 @@ export default function NotificationsScreen() {
       />
 
       <ScrollView
-        style={getStyles(colors).scroll}
-        contentContainerStyle={getStyles(colors).scrollContent}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
         }
       >
         {isLoading ? (
-          <View style={getStyles(colors).loadingWrap}>
+          <View style={styles.loadingWrap}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : isError ? (
@@ -80,7 +81,7 @@ export default function NotificationsScreen() {
         ) : notifications && notifications.length > 0 ? (
           <StaggeredList staggerDelay={50} initialDelay={80} direction="up">
             {notifications.map((notification: Notification) => (
-              <View key={notification.id} style={getStyles(colors).cardGap}>
+              <View key={notification.id} style={styles.cardGap}>
                 <NotificationCard
                   notification={notification}
                   onMarkAsRead={handleMarkAsRead}
@@ -92,12 +93,12 @@ export default function NotificationsScreen() {
             ))}
           </StaggeredList>
         ) : (
-          <View style={getStyles(colors).emptyWrap}>
-            <View style={getStyles(colors).emptyIconWrap}>
+          <View style={styles.emptyWrap}>
+            <View style={styles.emptyIconWrap}>
               <Ionicons name="notifications-off-outline" size={32} color={colors.onSurfaceVariant} />
             </View>
-            <Text style={getStyles(colors).emptyTitle}>No notifications</Text>
-            <Text style={getStyles(colors).emptyDesc}>You're all caught up!</Text>
+            <Text style={styles.emptyTitle}>No notifications</Text>
+            <Text style={styles.emptyDesc}>You're all caught up!</Text>
           </View>
         )}
       </ScrollView>
@@ -119,54 +120,55 @@ const NotificationCard = React.memo(function NotificationCard({
   onNavigate: (applicationId: string | null) => void
 }) {
   const colors = useColors()
+  const cs = useMemo(() => getStyles(colors), [colors])
   const isUnread = !notification.readAt
   const isOverdue = notification.type === 'FOLLOW_UP_OVERDUE'
 
   return (
     <Pressable
       onPress={() => onNavigate(notification.applicationId ?? null)}
-      style={({ pressed }) => [pressed && getStyles(colors).cardPressed]}
+      style={({ pressed }) => [pressed && cs.cardPressed]}
     >
       <Card
         notification
         notificationUnread={isUnread}
         notificationOverdue={isOverdue}
       >
-        <View style={getStyles(colors).cardInner}>
-          <View style={getStyles(colors).cardLeft}>
-            <View style={[getStyles(colors).dot, isUnread ? getStyles(colors).dotUnread : getStyles(colors).dotRead]} />
+        <View style={cs.cardInner}>
+          <View style={cs.cardLeft}>
+            <View style={[cs.dot, isUnread ? cs.dotUnread : cs.dotRead]} />
           </View>
-          <View style={getStyles(colors).cardBody}>
-            <View style={getStyles(colors).cardHeader}>
-              <Text style={[getStyles(colors).cardTitle, !isUnread && getStyles(colors).cardTitleDim]} numberOfLines={1}>
+          <View style={cs.cardBody}>
+            <View style={cs.cardHeader}>
+              <Text style={[cs.cardTitle, !isUnread && cs.cardTitleDim]} numberOfLines={1}>
                 {notification.title}
               </Text>
-              <Text style={getStyles(colors).cardTime}>
+              <Text style={cs.cardTime}>
                 {format(new Date(notification.createdAt), 'MMM d, h:mm a')}
               </Text>
             </View>
             {notification.body && (
-              <Text style={getStyles(colors).cardBodyText} numberOfLines={2}>
+              <Text style={cs.cardBodyText} numberOfLines={2}>
                 {notification.body}
               </Text>
             )}
             {notification.jobTitle && (
-              <Text style={getStyles(colors).cardMeta}>
+              <Text style={cs.cardMeta}>
                 {notification.jobTitle}
                 {notification.company && ` at ${notification.company}`}
               </Text>
             )}
-            <View style={getStyles(colors).cardActions}>
+            <View style={cs.cardActions}>
               {isUnread && (
-                <Pressable onPress={(e) => { e.stopPropagation(); onMarkAsRead(notification.id) }} style={getStyles(colors).actionBtn} accessibilityRole="button">
-                  <Text style={getStyles(colors).actionText}>Mark read</Text>
+                <Pressable onPress={(e) => { e.stopPropagation(); onMarkAsRead(notification.id) }} style={cs.actionBtn} accessibilityRole="button">
+                  <Text style={cs.actionText}>Mark read</Text>
                 </Pressable>
               )}
-              <Pressable onPress={(e) => { e.stopPropagation(); onSnooze(notification.id, 3) }} style={getStyles(colors).actionBtn} accessibilityRole="button">
-                <Text style={getStyles(colors).actionText}>Snooze</Text>
+              <Pressable onPress={(e) => { e.stopPropagation(); onSnooze(notification.id, 3) }} style={cs.actionBtn} accessibilityRole="button">
+                <Text style={cs.actionText}>Snooze</Text>
               </Pressable>
-              <Pressable onPress={(e) => { e.stopPropagation(); onDismiss(notification.id) }} style={getStyles(colors).actionBtn} accessibilityRole="button">
-                <Text style={[getStyles(colors).actionText, getStyles(colors).actionDanger]}>Dismiss</Text>
+              <Pressable onPress={(e) => { e.stopPropagation(); onDismiss(notification.id) }} style={cs.actionBtn} accessibilityRole="button">
+                <Text style={[cs.actionText, cs.actionDanger]}>Dismiss</Text>
               </Pressable>
             </View>
           </View>
